@@ -60,7 +60,7 @@ EOF
 fi
 
 chown -R reforger:reforger /opt/reforger/steamcmd /opt/reforger/server-stable /opt/reforger/server-exp
-chown -R "${SUDO_USER:-ubuntu}:reforger" /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data 2>/dev/null || chown -R ubuntu:reforger /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data
+chown -R "${SUDO_USER:-ubuntu}:reforger" /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data /opt/reforger/steam-home 2>/dev/null || chown -R ubuntu:reforger /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data /opt/reforger/steam-home
 chmod 775 /opt/reforger/server-stable /opt/reforger/server-exp
 chmod -R g+rwX /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data
 usermod -aG reforger "${SUDO_USER:-ubuntu}" 2>/dev/null || true
