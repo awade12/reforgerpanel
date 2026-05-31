@@ -101,7 +101,16 @@ function finalizeInstall(branch: Branch) {
 export async function runSteamCmd(args: string[], onLine?: InstallProgressHandler): Promise<{ ok: boolean; output: string }> {
   ensureReforgerDirs();
 
-  if (!fs.existsSync(agentConfig.steamcmd)) {
+  let steamcmd = agentConfig.steamcmd;
+  if (fs.existsSync(steamcmd)) {
+    try {
+      steamcmd = fs.realpathSync(steamcmd);
+    } catch {
+      /* use configured path */
+    }
+  }
+
+  if (!fs.existsSync(steamcmd)) {
     return {
       ok: false,
       output: `SteamCMD not found at ${agentConfig.steamcmd}. Run: sudo bash scripts/bootstrap-host.sh`,
@@ -110,9 +119,9 @@ export async function runSteamCmd(args: string[], onLine?: InstallProgressHandle
 
   return new Promise((resolve) => {
     const chunks: string[] = [];
-    const child = spawn(agentConfig.steamcmd, args, {
+    const child = spawn(steamcmd, args, {
       stdio: ["ignore", "pipe", "pipe"],
-      cwd: path.dirname(agentConfig.steamcmd),
+      cwd: path.dirname(steamcmd),
       env: steamEnv(),
     });
 

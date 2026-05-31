@@ -9,15 +9,25 @@ fi
 apt-get update
 apt-get install -y libcurl4 curl jq net-tools build-essential lib32gcc-s1
 
-if ! command -v steamcmd >/dev/null 2>&1; then
-  echo "Installing SteamCMD from Valve..."
-  mkdir -p /opt/reforger/steamcmd
-  if [[ ! -f /opt/reforger/steamcmd/steamcmd.sh ]]; then
-    curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C /opt/reforger/steamcmd
+STEAMCMD_DIR="/opt/reforger/steamcmd"
+STEAMCMD_BIN="${STEAMCMD_DIR}/steamcmd.sh"
+
+install_steamcmd() {
+  mkdir -p "${STEAMCMD_DIR}"
+  if [[ ! -f "${STEAMCMD_BIN}" ]]; then
+    echo "Installing SteamCMD from Valve..."
+    curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C "${STEAMCMD_DIR}"
   fi
-  ln -sf /opt/reforger/steamcmd/steamcmd.sh /usr/local/bin/steamcmd
-fi
-chmod 755 /opt/reforger/steamcmd/steamcmd.sh /opt/reforger/steamcmd/linux32/steamcmd 2>/dev/null || true
+  chmod 755 "${STEAMCMD_BIN}" "${STEAMCMD_DIR}/linux32/steamcmd" 2>/dev/null || true
+  cat >/usr/local/bin/steamcmd <<'EOF'
+#!/usr/bin/env bash
+cd /opt/reforger/steamcmd
+exec ./steamcmd.sh "$@"
+EOF
+  chmod 755 /usr/local/bin/steamcmd
+}
+
+install_steamcmd
 
 id reforger &>/dev/null || useradd --system --home /opt/reforger --shell /usr/sbin/nologin reforger || true
 
@@ -38,7 +48,7 @@ AGENT_HOST=127.0.0.1
 AGENT_PORT=9100
 REFORGER_ROOT=/opt/reforger
 REFORGER_USER=${SUDO_USER:-ubuntu}
-STEAMCMD_PATH=/usr/local/bin/steamcmd
+STEAMCMD_PATH=/opt/reforger/steamcmd/steamcmd.sh
 PANEL_DATA_DIR=/opt/reforger/panel-data
 PORT=3000
 HOSTNAME=0.0.0.0

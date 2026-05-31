@@ -7,7 +7,7 @@ export const SERVER_EXP_DIR = `${REFORGER_ROOT}/server-exp`;
 export const INSTANCES_DIR = `${REFORGER_ROOT}/instances`;
 export const MISSIONS_DIR = `${REFORGER_ROOT}/missions`;
 export const LOCAL_MODS_DIR = `${REFORGER_ROOT}/local-mods`;
-export const STEAMCMD = process.env.STEAMCMD_PATH ?? "/usr/games/steamcmd";
+export const STEAMCMD = process.env.STEAMCMD_PATH ?? "/opt/reforger/steamcmd/steamcmd.sh";
 
 export const DEFAULT_GAME_PORT = 2001;
 export const DEFAULT_A2S_PORT = 17777;

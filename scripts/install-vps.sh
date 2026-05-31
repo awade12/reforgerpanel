@@ -167,7 +167,10 @@ ensure_env_secrets() {
   grep -q '^AGENT_HOST=' "${ENV_FILE}" || echo "AGENT_HOST=127.0.0.1" >>"${ENV_FILE}"
   grep -q '^AGENT_PORT=' "${ENV_FILE}" || echo "AGENT_PORT=9100" >>"${ENV_FILE}"
   grep -q '^REFORGER_ROOT=' "${ENV_FILE}" || echo "REFORGER_ROOT=/opt/reforger" >>"${ENV_FILE}"
-  grep -q '^STEAMCMD_PATH=' "${ENV_FILE}" || echo "STEAMCMD_PATH=/usr/local/bin/steamcmd" >>"${ENV_FILE}"
+  grep -q '^STEAMCMD_PATH=' "${ENV_FILE}" || echo "STEAMCMD_PATH=/opt/reforger/steamcmd/steamcmd.sh" >>"${ENV_FILE}"
+  if grep -q '^STEAMCMD_PATH=/usr/local/bin/steamcmd' "${ENV_FILE}" 2>/dev/null; then
+    sed -i 's|^STEAMCMD_PATH=.*|STEAMCMD_PATH=/opt/reforger/steamcmd/steamcmd.sh|' "${ENV_FILE}"
+  fi
   grep -q '^PANEL_DATA_DIR=' "${ENV_FILE}" || echo "PANEL_DATA_DIR=/opt/reforger/panel-data" >>"${ENV_FILE}"
   grep -q '^PORT=' "${ENV_FILE}" || echo "PORT=${PANEL_PORT}" >>"${ENV_FILE}"
 
