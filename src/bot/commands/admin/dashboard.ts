@@ -11,7 +11,7 @@ export const command: BotCommand = {
   data: new SlashCommandBuilder().setName("dashboard").setDescription("Host dashboard overview"),
   async execute(interaction) {
     await deferPublic(interaction);
-    const config = loadBotConfig();
+    const config = await loadBotConfig();
     const status = await agentFetch<HostStatus>("/host/status?quick=1");
     await interaction.editReply({
       embeds: [dashboardEmbed(status, config.panelUrl)],

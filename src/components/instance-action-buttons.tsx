@@ -1,6 +1,5 @@
 "use client";
 
-import type { InstanceStatus } from "@/lib/shared/types";
 import { isInstanceBusy, isInstanceLive } from "@/lib/shared/instance-state";
 import { Button } from "@/components/Shell";
 
@@ -9,7 +8,7 @@ export function InstanceActionButtons({
   onAction,
   disabled,
 }: {
-  status: InstanceStatus;
+  status: string;
   onAction: (kind: "start" | "stop" | "restart") => void;
   disabled?: boolean;
 }) {

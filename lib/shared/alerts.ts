@@ -54,7 +54,7 @@ export function defaultSettings() {
   };
 }
 
-export function mergeSettings<T extends Record<string, unknown>>(partial?: Partial<T>, base?: T): T {
+export function mergeSettings<T extends object>(partial?: Partial<T>, base?: T): T {
   return { ...(base ?? defaultSettings()), ...partial } as T;
 }
 

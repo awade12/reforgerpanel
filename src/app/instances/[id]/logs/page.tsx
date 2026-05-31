@@ -26,7 +26,6 @@ export default function InstanceLogsPage() {
         <div className="flex flex-wrap gap-2 sm:hidden">
           <InstanceActionButtons
             status={instance.status}
-            runtime={instance.runtime}
             onAction={(kind) => void runAction(kind)}
           />
         </div>

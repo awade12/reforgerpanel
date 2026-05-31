@@ -19,7 +19,7 @@ export const command: BotCommand = {
     const instance = await resolveSelectedInstance(interaction);
     if (!instance) return;
 
-    const config = loadBotConfig();
+    const config = await loadBotConfig();
     await interaction.editReply({
       embeds: [instanceStatusEmbed(instance, config.panelUrl)],
     });

@@ -10,7 +10,7 @@ export const command: BotCommand = {
   data: new SlashCommandBuilder().setName("instances").setDescription("List all Reforger server instances"),
   async execute(interaction) {
     await deferPublic(interaction);
-    const config = loadBotConfig();
+    const config = await loadBotConfig();
     const instances = await listInstances();
     await interaction.editReply({
       embeds: [instanceSummaryEmbed(instances, config.panelUrl)],

@@ -25,5 +25,3 @@ export const agentConfig = {
   steamHome: process.env.STEAM_HOME ?? "/opt/reforger/steam-home",
   runAsUser: process.env.REFORGER_USER ?? process.env.USER ?? "ubuntu",
 };
-
-export const dbPath = path.join(agentConfig.dataDir, "panel.db");

@@ -11,7 +11,7 @@ export const command: BotCommand = {
   data: new SlashCommandBuilder().setName("host").setDescription("Host CPU, memory, and disk metrics"),
   async execute(interaction) {
     await deferPublic(interaction);
-    const config = loadBotConfig();
+    const config = await loadBotConfig();
     const status = await agentFetch<HostStatus>("/host/status");
     await interaction.editReply({ embeds: [hostStatusEmbed(status, config.panelUrl)] });
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PanelInstanceAlerts } from "@/lib/shared/secrets";
+import type { PanelInstanceAlerts, PanelSettingsResponse } from "@/lib/shared/secrets";
 import { normalizeInstanceAlertsResponse } from "@/lib/shared/secrets";
 import type { InstanceDetail } from "@/hooks/use-instance";
 import { Button, Input, api, ApiError } from "@/components/Shell";

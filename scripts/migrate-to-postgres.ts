@@ -1,8 +1,8 @@
 import "../lib/shared/load-env";
 import fs from "fs";
-import { getPool, initDb, usePostgres } from "../agent/db";
+import { getPool, importStoreToPostgres, usePostgres } from "../agent/db/postgres";
+import { initDb } from "../agent/db";
 import { jsonStorePath, loadJsonStore } from "../agent/db/json-store";
-import { importStoreToPostgres } from "../agent/db/postgres";
 
 async function postgresHasData() {
   if (!usePostgres()) return false;

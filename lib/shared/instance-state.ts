@@ -1,9 +1,7 @@
-import type { InstanceStatus } from "./types";
-
-export function isInstanceLive(status: InstanceStatus) {
+export function isInstanceLive(status: string) {
   return status === "running" || status === "starting";
 }
 
-export function isInstanceBusy(status: InstanceStatus) {
+export function isInstanceBusy(status: string) {
   return status === "starting" || status === "stopping";
 }

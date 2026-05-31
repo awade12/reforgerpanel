@@ -44,12 +44,15 @@ Cutover stops dev panel/agent on 3000/9100, backs up `/etc/reforgerpanel/env`, a
 ## Install
 
 ```bash
+sudo rm -rf /opt/reforgerpanel   # only if retrying after a failed install
+sudo mkdir -p /opt/reforgerpanel
+sudo chown "$USER:$USER" /opt/reforgerpanel
 git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
 cd /opt/reforgerpanel
 sudo bash scripts/install-vps.sh --domain panel.example.com --email admin@example.com
 ```
 
-Do not use `sudo git clone` — that leaves the repo owned by root and breaks `npm` as your user. If you already did, fix with: `sudo chown -R $USER:$USER /opt/reforgerpanel`
+`/opt` is owned by root — you cannot `git clone` there directly. Create the directory and `chown` it to your user first. Do **not** use `sudo git clone` (that leaves every file owned by root and breaks `npm`).
 
 The script will:
 1. Verify DNS resolves to this server

@@ -2,20 +2,31 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypt
 
 const PREFIX = "enc:v1:";
 
-export function secretsEncryptionConfigured(env: NodeJS.ProcessEnv = process.env) {
+type SecretEnv = {
+  SECRETS_ENCRYPTION_KEY?: string;
+  SESSION_SECRET?: string;
+  PANEL_SESSION_SECRET?: string;
+};
+
+function secretEnv(env?: SecretEnv): SecretEnv {
+  return env ?? (process.env as SecretEnv);
+}
+
+export function secretsEncryptionConfigured(env?: SecretEnv) {
   return Boolean(resolveSecretsKeyMaterial(env));
 }
 
-function resolveSecretsKeyMaterial(env: NodeJS.ProcessEnv = process.env) {
+function resolveSecretsKeyMaterial(env?: SecretEnv) {
+  const e = secretEnv(env);
   return (
-    env.SECRETS_ENCRYPTION_KEY?.trim() ||
-    env.PANEL_SESSION_SECRET?.trim() ||
-    env.SESSION_SECRET?.trim() ||
+    e.SECRETS_ENCRYPTION_KEY?.trim() ||
+    e.PANEL_SESSION_SECRET?.trim() ||
+    e.SESSION_SECRET?.trim() ||
     ""
   );
 }
 
-function deriveKey(env: NodeJS.ProcessEnv = process.env) {
+function deriveKey(env?: SecretEnv) {
   const material = resolveSecretsKeyMaterial(env);
   if (!material) return null;
   return createHash("sha256").update(material).digest();
@@ -25,7 +36,7 @@ export function isEncryptedSecret(value: string) {
   return value.startsWith(PREFIX);
 }
 
-export function encryptSecret(plaintext: string, env: NodeJS.ProcessEnv = process.env) {
+export function encryptSecret(plaintext: string, env?: SecretEnv) {
   if (!plaintext || isEncryptedSecret(plaintext)) return plaintext;
   const key = deriveKey(env);
   if (!key) return plaintext;
@@ -36,7 +47,7 @@ export function encryptSecret(plaintext: string, env: NodeJS.ProcessEnv = proces
   return `${PREFIX}${iv.toString("base64url")}:${tag.toString("base64url")}:${encrypted.toString("base64url")}`;
 }
 
-export function decryptSecret(value: string, env: NodeJS.ProcessEnv = process.env) {
+export function decryptSecret(value: string, env?: SecretEnv) {
   if (!value || !isEncryptedSecret(value)) return value;
   const key = deriveKey(env);
   if (!key) throw new Error("SECRETS_ENCRYPTION_KEY is required to decrypt stored secrets");
@@ -49,7 +60,7 @@ export function decryptSecret(value: string, env: NodeJS.ProcessEnv = process.en
   return decrypted.toString("utf8");
 }
 
-export function encryptSecretField(value: string, env: NodeJS.ProcessEnv = process.env) {
+export function encryptSecretField(value: string, env?: SecretEnv) {
   if (!value) return value;
   try {
     return encryptSecret(value, env);
@@ -58,7 +69,7 @@ export function encryptSecretField(value: string, env: NodeJS.ProcessEnv = proce
   }
 }
 
-export function decryptSecretField(value: string, env: NodeJS.ProcessEnv = process.env) {
+export function decryptSecretField(value: string, env?: SecretEnv) {
   if (!value) return value;
   try {
     return decryptSecret(value, env);
