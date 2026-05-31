@@ -21,7 +21,7 @@ chmod 755 /opt/reforger/steamcmd/steamcmd.sh /opt/reforger/steamcmd/linux32/stea
 
 id reforger &>/dev/null || useradd --system --home /opt/reforger --shell /usr/sbin/nologin reforger || true
 
-mkdir -p /opt/reforger/{server-stable,server-exp,instances,missions,local-mods,steamcmd}
+mkdir -p /opt/reforger/{server-stable,server-exp,instances,missions,local-mods,steamcmd,panel-data,steam-home}
 mkdir -p /etc/reforgerpanel
 
 if [[ ! -f /etc/reforgerpanel/env ]]; then

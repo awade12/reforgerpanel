@@ -89,6 +89,11 @@ log() {
   echo "[$(date -Iseconds)] $*" >>"${LOG_FILE}"
 }
 
+if [[ ! -O "${INSTALL_DIR}" ]] && [[ "$(stat -c '%U' "${INSTALL_DIR}")" == "root" ]]; then
+  log "Fixing ownership of ${INSTALL_DIR} (clone with sudo left files owned by root)"
+  chown -R "${PANEL_USER}:${PANEL_USER}" "${INSTALL_DIR}"
+fi
+
 random_hex() {
   openssl rand -hex 32
 }

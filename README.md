@@ -9,7 +9,7 @@ Custom Arma Reforger dedicated server control panel for Ubuntu 22.04+.
 **Requires a domain.** HTTPS via Caddy + Let's Encrypt is mandatory — the panel is not exposed on port 3000 publicly.
 
 ```bash
-# 1. Point panel.example.com A record at your VPS IP
+# Clone as your user — avoid sudo git clone (files end up owned by root)
 git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
 cd /opt/reforgerpanel
 sudo bash scripts/install-vps.sh --domain panel.example.com --email admin@example.com

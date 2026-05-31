@@ -49,6 +49,8 @@ cd /opt/reforgerpanel
 sudo bash scripts/install-vps.sh --domain panel.example.com --email admin@example.com
 ```
 
+Do not use `sudo git clone` — that leaves the repo owned by root and breaks `npm` as your user. If you already did, fix with: `sudo chown -R $USER:$USER /opt/reforgerpanel`
+
 The script will:
 1. Verify DNS resolves to this server
 2. Install Node, SteamCMD, PostgreSQL, **Caddy**
