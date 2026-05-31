@@ -34,11 +34,10 @@ function readCString(buf: Buffer, offset: number) {
 
 function parseA2sInfo(payload: Buffer): A2sInfo {
   let offset = 0;
-  const protocol = payload.readUInt8(offset);
-  offset += 1;
-  if (protocol !== 17 && protocol !== 50) {
-    throw new Error(`Unexpected A2S protocol ${protocol}`);
+  if (payload.length < 1) {
+    throw new Error("A2S payload too short");
   }
+  offset += 1;
 
   const name = readCString(payload, offset);
   offset = name.next;
@@ -152,29 +151,46 @@ function sendQuery(host: string, port: number, packet: Buffer, timeoutMs: number
   });
 }
 
+async function queryA2sOnce(host: string, port: number, timeoutMs: number): Promise<A2sQueryResult> {
+  let response = await sendQuery(host, port, buildInfoQuery(), timeoutMs);
+
+  if (response.length >= 5 && response.readUInt8(4) === 0x41) {
+    const challenge = response.readInt32LE(5);
+    response = await sendQuery(host, port, buildInfoQuery(challenge), timeoutMs);
+  }
+
+  if (response.length < 6 || response.readUInt8(4) !== 0x49) {
+    return { ok: false, error: "Invalid A2S response" };
+  }
+
+  const info = parseA2sInfo(response.subarray(5));
+  return { ok: true, info, latencyMs: 0 };
+}
+
 export async function queryA2s(host: string, port: number, timeoutMs = 2500): Promise<A2sQueryResult> {
   const started = Date.now();
-  try {
-    let response = await sendQuery(host, port, buildInfoQuery(), timeoutMs);
+  let lastError = "A2S query timed out";
 
-    if (response.length >= 5 && response.readUInt8(4) === 0x41) {
-      const challenge = response.readInt32LE(5);
-      response = await sendQuery(host, port, buildInfoQuery(challenge), timeoutMs);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await queryA2sOnce(host, port, timeoutMs);
+      if (result.ok) {
+        return { ...result, latencyMs: Date.now() - started };
+      }
+      lastError = result.error;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
     }
-
-    if (response.length < 6 || response.readUInt8(4) !== 0x49) {
-      return { ok: false, error: "Invalid A2S response", latencyMs: Date.now() - started };
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
-
-    const info = parseA2sInfo(response.subarray(5));
-    return { ok: true, info, latencyMs: Date.now() - started };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-      latencyMs: Date.now() - started,
-    };
   }
+
+  return {
+    ok: false,
+    error: lastError,
+    latencyMs: Date.now() - started,
+  };
 }
 
 export function formatPlayerCount(info: A2sInfo) {

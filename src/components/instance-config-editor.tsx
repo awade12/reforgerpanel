@@ -310,10 +310,10 @@ export function InstanceConfigEditor({
               />
             </SettingRow>
             <SettingRow
-              label="A2S address"
-              hint="IPv4 used for Steam server query registration. Usually matches public IP."
+              label="A2S bind address"
+              hint="Leave empty to listen on all interfaces. Do not set this to your public IP — use Public address above for that."
             >
-              <TextInput value={config.a2s?.address ?? ""} onChange={(v) => patchA2s({ address: v })} />
+              <TextInput value={config.a2s?.address ?? ""} onChange={(v) => patchA2s({ address: v })} placeholder="empty or 0.0.0.0" />
             </SettingRow>
             <SettingRow
               label="A2S port"

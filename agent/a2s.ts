@@ -6,6 +6,9 @@ import { getHostInfo, readInstanceConfig } from "./instances";
 
 export type InstanceQuerySnapshot = {
   listed: boolean;
+  localListed: boolean;
+  publicListed: boolean;
+  providerFirewallLikely: boolean;
   players: number | null;
   maxPlayers: number | null;
   playerCount: string;
@@ -27,10 +30,31 @@ export function resolveA2sTarget(instance: InstanceRecord) {
 
 export async function queryInstanceA2s(instance: InstanceRecord, timeoutMs = 2500): Promise<InstanceQuerySnapshot> {
   const { queryHost, queryPort } = resolveA2sTarget(instance);
-  const local = await queryA2s("127.0.0.1", queryPort, timeoutMs);
-  const result = local.ok ? local : await queryA2s(queryHost, queryPort, timeoutMs);
+  const hosts = ["127.0.0.1", queryHost].filter((host, index, all) => host && all.indexOf(host) === index);
+
+  let result: Awaited<ReturnType<typeof queryA2s>> = { ok: false, error: "A2S query timed out" };
+  let usedHost = queryHost;
+
+  for (const host of hosts) {
+    const attempt = await queryA2s(host, queryPort, timeoutMs);
+    if (attempt.ok) {
+      result = attempt;
+      usedHost = host;
+      break;
+    }
+    result = attempt;
+  }
 
   if (!result.ok) {
+    const stillStarting =
+      instance.status === "starting" ||
+      (instance.lastStartedAt &&
+        Date.now() - new Date(instance.lastStartedAt).getTime() < 45_000);
+    const error =
+      stillStarting && result.error.includes("timed out")
+        ? "Server still starting — A2S may not respond for ~30s after launch"
+        : result.error;
+
     return {
       listed: false,
       players: null,
@@ -39,8 +63,8 @@ export async function queryInstanceA2s(instance: InstanceRecord, timeoutMs = 250
       map: null,
       serverName: null,
       latencyMs: result.latencyMs ?? null,
-      error: result.error,
-      queryHost,
+      error,
+      queryHost: usedHost,
       queryPort,
     };
   }
@@ -54,7 +78,7 @@ export async function queryInstanceA2s(instance: InstanceRecord, timeoutMs = 250
     serverName: result.info.name || null,
     latencyMs: result.latencyMs,
     error: null,
-    queryHost,
+    queryHost: usedHost,
     queryPort,
   };
 }

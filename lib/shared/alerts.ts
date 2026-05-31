@@ -47,7 +47,7 @@ export function defaultSettings() {
     dailyDigestCron: "0 8 * * *",
     memoryAlertThresholdMb: 4096,
     enableMemoryAlerts: false,
-    enableFirewallAutomation: false,
+    enableFirewallAutomation: true,
     resendApiKey: "",
     resendFromEmail: "",
     resendEnabled: false,

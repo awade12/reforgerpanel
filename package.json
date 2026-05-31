@@ -28,6 +28,7 @@
     "rehearse:install": "sudo bash scripts/rehearse-install.sh",
     "check:install": "sudo bash scripts/check-install.sh",
     "smoke": "tsx scripts/smoke-test.ts",
+    "test": "node --import tsx --test lib/shared/*.test.ts",
     "secrets:rotate": "tsx scripts/rotate-secrets.ts",
     "build": "next build",
     "start": "sh -c 'next start -H \"${HOSTNAME:-0.0.0.0}\" -p \"${PORT:-3000}\"'",

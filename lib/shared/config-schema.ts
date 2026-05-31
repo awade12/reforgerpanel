@@ -184,9 +184,9 @@ function DEFAULT_RCON_OFFSET(gamePort: number) {
 
 export { DEFAULT_A2S_OFFSET, DEFAULT_RCON_OFFSET };
 
-/** Resolve a usable public IPv4 for a2s/rcon (game rejects empty address strings). */
+/** Resolve the public IPv4 advertised to players and Bohemia backend registration. */
 export function resolvePublicAddress(config: ServerConfig, ipHint?: string): string {
-  const candidates = [config.publicAddress, config.a2s?.address, config.rcon?.address, ipHint ?? ""];
+  const candidates = [config.publicAddress, ipHint ?? ""];
   for (const raw of candidates) {
     const value = raw?.trim() ?? "";
     if (value && IPV4_PATTERN.test(value)) return value;
@@ -194,7 +194,15 @@ export function resolvePublicAddress(config: ServerConfig, ipHint?: string): str
   return "";
 }
 
-/** Copy publicAddress (or host hint) into empty a2s/rcon addresses before launch. */
+/** a2s/rcon address is a bind address (interface), not the public registration IP. */
+export function normalizeServiceBindAddress(value: string | undefined, publicAddress?: string): string {
+  const trimmed = value?.trim() ?? "";
+  const pub = publicAddress?.trim() ?? "";
+  if (!trimmed || trimmed === "0.0.0.0" || (pub && trimmed === pub)) return "";
+  return trimmed;
+}
+
+/** Fill publicAddress and normalize service bind addresses before launch. */
 export function sanitizeNetworkAddresses(config: ServerConfig, ipHint?: string): ServerConfig {
   const address = resolvePublicAddress(config, ipHint);
   const next: ServerConfig = {
@@ -203,11 +211,12 @@ export function sanitizeNetworkAddresses(config: ServerConfig, ipHint?: string):
     rcon: { ...config.rcon },
   };
 
-  if (address) {
-    if (!next.publicAddress?.trim()) next.publicAddress = address;
-    if (!next.a2s.address?.trim()) next.a2s.address = address;
-    if (!next.rcon.address?.trim()) next.rcon.address = address;
+  if (address && !next.publicAddress?.trim()) {
+    next.publicAddress = address;
   }
+
+  next.a2s.address = normalizeServiceBindAddress(next.a2s.address, next.publicAddress);
+  next.rcon.address = normalizeServiceBindAddress(next.rcon.address, next.publicAddress);
 
   if (next.publicPort > 0) {
     if (!next.a2s.port) next.a2s.port = DEFAULT_A2S_OFFSET(next.publicPort);

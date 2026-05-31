@@ -106,7 +106,9 @@ export function buildRegistrationDiagnostics(config: ServerConfig, listed?: bool
       id: "a2s-query",
       label: "A2S query responds",
       ok: listed,
-      detail: listed ? "Query port answered — server looks listed" : "No A2S response — check firewall, bind address, or server not running",
+      detail: listed
+        ? "Query port answered — server looks listed"
+        : "No A2S response — wait ~30s after start, ensure a2s.address is empty (not public IP), and UDP query port is open",
     });
   }
 
