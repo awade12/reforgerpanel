@@ -1,7 +1,7 @@
 import { getUsedPorts, nextFreePort } from "../db";
 import { getHostInfo } from "../instances";
 import { getHostStatus } from "../host-status";
-import { getGameInstallStatus, getInstallJob, installOrUpdate, ensureReforgerDirs, startInstallJob } from "../steamcmd";
+import { getGameInstallStatus, getInstallJob, installOrUpdate, ensureReforgerDirs, startInstallJob, cancelInstallJob } from "../steamcmd";
 import { firewallAvailable, ufwStatus } from "../firewall";
 import { discoverScenariosAsync, ensureScenarioCache, getScenarios } from "../scenarios";
 import { parseBranch, sendJson, type RequestContext } from "../http";
@@ -44,6 +44,11 @@ export async function handleHostRoutes(ctx: RequestContext) {
     const branch = parseBranch(body.branch);
     const job = startInstallJob(branch);
     sendJson(res, 202, job);
+    return true;
+  }
+
+  if (pathname === "/game/install/cancel" && method === "POST") {
+    sendJson(res, 200, cancelInstallJob());
     return true;
   }
 

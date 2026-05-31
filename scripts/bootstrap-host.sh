@@ -8,6 +8,8 @@ fi
 
 apt-get update
 apt-get install -y libcurl4 curl jq net-tools build-essential lib32gcc-s1
+dpkg --add-architecture i386 2>/dev/null || true
+apt-get install -y libc6-i386 lib32stdc++6 libstdc++6:i386
 
 STEAMCMD_DIR="/opt/reforger/steamcmd"
 STEAMCMD_BIN="${STEAMCMD_DIR}/steamcmd.sh"
@@ -59,9 +61,10 @@ EOF
   echo "Created /etc/reforgerpanel/env with generated secrets."
 fi
 
-chown -R reforger:reforger /opt/reforger/steamcmd /opt/reforger/server-stable /opt/reforger/server-exp
-chown -R "${SUDO_USER:-ubuntu}:reforger" /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data /opt/reforger/steam-home 2>/dev/null || chown -R ubuntu:reforger /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data /opt/reforger/steam-home
-chmod 775 /opt/reforger/server-stable /opt/reforger/server-exp
+chown -R reforger:reforger /opt/reforger/steamcmd
+chown "${SUDO_USER:-ubuntu}:reforger" /opt/reforger/server-stable /opt/reforger/server-exp /opt/reforger/steam-home 2>/dev/null || chown ubuntu:reforger /opt/reforger/server-stable /opt/reforger/server-exp /opt/reforger/steam-home
+chown -R "${SUDO_USER:-ubuntu}:reforger" /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data 2>/dev/null || chown -R ubuntu:reforger /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data
+chmod 775 /opt/reforger/server-stable /opt/reforger/server-exp /opt/reforger/steam-home
 chmod -R g+rwX /opt/reforger/instances /opt/reforger/missions /opt/reforger/local-mods /opt/reforger/panel-data
 usermod -aG reforger "${SUDO_USER:-ubuntu}" 2>/dev/null || true
 
