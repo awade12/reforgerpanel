@@ -126,9 +126,9 @@ export function createDefaultConfig(input: {
     bindPort: input.publicPort,
     publicAddress: input.publicAddress ?? "",
     publicPort: input.publicPort,
-    a2s: { address: input.publicAddress ?? "", port: DEFAULT_A2S_OFFSET(input.publicPort) },
+    a2s: { address: "", port: DEFAULT_A2S_OFFSET(input.publicPort) },
     rcon: {
-      address: input.publicAddress ?? "",
+      address: "",
       port: DEFAULT_RCON_OFFSET(input.publicPort),
       password: "",
       permission: "monitor",
@@ -250,13 +250,30 @@ export function normalizeLegacyConfig(input: unknown): unknown {
   return raw;
 }
 
-/** Strip rcon when password unset — game rejects empty/short rcon.password. */
+function omitEmptyIpv4Field(obj: Record<string, unknown>, key: string) {
+  const value = obj[key];
+  if (typeof value === "string" && !value.trim()) {
+    delete obj[key];
+  }
+}
+
+/** Strip fields the game JSON schema rejects before writing config.json. */
 export function configForDisk(config: ServerConfig): Record<string, unknown> {
   const obj = normalizeLegacyConfig(JSON.parse(JSON.stringify(config))) as Record<string, unknown>;
-  const rcon = obj.rcon as { password?: string } | undefined;
+  omitEmptyIpv4Field(obj, "bindAddress");
+
+  const a2s = obj.a2s as Record<string, unknown> | undefined;
+  if (a2s) {
+    omitEmptyIpv4Field(a2s, "address");
+  }
+
+  const rcon = obj.rcon as { password?: string; address?: string } | undefined;
   if (!rcon?.password || rcon.password.length < 3) {
     delete obj.rcon;
+  } else {
+    omitEmptyIpv4Field(rcon, "address");
   }
+
   return obj;
 }
 
