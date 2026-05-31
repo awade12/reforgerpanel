@@ -183,6 +183,8 @@ export interface SettingsRecord {
   scheduledUpdateCron: string;
   enableScheduledUpdates: boolean;
   enableModAwareUpdates: boolean;
+  enableScheduledPanelUpdates: boolean;
+  scheduledPanelUpdateCron: string;
   enableDailyDigest: boolean;
   dailyDigestCron: string;
   memoryAlertThresholdMb: number;

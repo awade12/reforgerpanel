@@ -26,4 +26,5 @@ export const agentConfig = {
   steamUseDocker: ["1", "true", "yes"].includes((process.env.STEAM_USE_DOCKER ?? "").toLowerCase()),
   steamDockerImage: process.env.STEAM_DOCKER_IMAGE ?? "gameservermanagers/steamcmd:latest",
   runAsUser: process.env.REFORGER_USER ?? process.env.USER ?? "ubuntu",
+  panelRoot: process.env.PANEL_ROOT ?? process.cwd(),
 };

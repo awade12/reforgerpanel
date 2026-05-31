@@ -5,6 +5,8 @@ import { getGameInstallStatus, getInstallJob, installOrUpdate, ensureReforgerDir
 import { firewallAvailable, ufwStatus } from "../firewall";
 import { discoverScenariosAsync, ensureScenarioCache, getScenarios } from "../scenarios";
 import { parseBranch, sendJson, type RequestContext } from "../http";
+import { getGameUpdateJob, isGameUpdateRunning, startGameUpdateJob } from "../monitor";
+import { getPanelUpdateStatus, startPanelUpdate } from "../panel-update";
 
 export async function handleHostRoutes(ctx: RequestContext) {
   const { pathname, method, res, url } = ctx;
@@ -39,7 +41,32 @@ export async function handleHostRoutes(ctx: RequestContext) {
     return true;
   }
 
+  if (pathname === "/host/panel/update" && method === "GET") {
+    sendJson(res, 200, getPanelUpdateStatus());
+    return true;
+  }
+
+  if (pathname === "/host/panel/update/run" && method === "POST") {
+    sendJson(res, 202, startPanelUpdate("manual"));
+    return true;
+  }
+
+  if (pathname === "/game/update" && method === "GET") {
+    sendJson(res, 200, getGameUpdateJob());
+    return true;
+  }
+
+  if (pathname === "/game/update/run" && method === "POST") {
+    const job = startGameUpdateJob("manual");
+    sendJson(res, 202, job);
+    return true;
+  }
+
   if (pathname === "/game/install" && method === "POST") {
+    if (isGameUpdateRunning()) {
+      sendJson(res, 409, { error: "Game update already running" });
+      return true;
+    }
     const body = await ctx.readBody();
     const branch = parseBranch(body.branch);
     const job = startInstallJob(branch);
@@ -53,6 +80,10 @@ export async function handleHostRoutes(ctx: RequestContext) {
   }
 
   if (pathname === "/game/install/sync" && method === "POST") {
+    if (isGameUpdateRunning()) {
+      sendJson(res, 409, { error: "Game update already running" });
+      return true;
+    }
     const body = await ctx.readBody();
     const branch = parseBranch(body.branch);
     ensureReforgerDirs();

@@ -8,6 +8,7 @@ import { loadMissionMetaFromDisk } from "./missions";
 import { ensureScenarioCache } from "./scenarios";
 import { findLatestLogFile, parseFpsFromLogs, startMonitorLoop, tailLogFile } from "./logs";
 import { startScheduledUpdateLoop } from "./monitor";
+import { clearPanelUpdateRunningFlag, startPanelUpdateLoop } from "./panel-update";
 import { handleRequest } from "./router";
 import { agentTokenOk } from "./panel-auth";
 
@@ -83,6 +84,8 @@ function startAgentServer() {
 
   startMonitorLoop();
   startScheduledUpdateLoop();
+  startPanelUpdateLoop();
+  clearPanelUpdateRunningFlag();
 
   server.listen(agentConfig.port, agentConfig.host, () => {
     console.log(`Reforger agent listening on http://${agentConfig.host}:${agentConfig.port}`);
