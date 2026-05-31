@@ -44,7 +44,7 @@ import { mergeInstanceAlerts } from "../lib/shared/alerts";
 import { mergeInstanceAlertSecrets, mergeServerConfigSecrets } from "../lib/shared/secrets";
 import type { ServerConfig } from "../lib/shared/config-schema";
 import { handleAlertsSettingsChange, notifyDiscord, syncInstanceStatusEmbed, deleteInstanceStatusEmbed } from "./alerts";
-import { collectStartWarnings } from "./diagnostics";
+import { collectStartWarnings, assertPreflightForStart } from "./diagnostics";
 import { applyUfwRules } from "./firewall";
 import { getSettings } from "./db";
 import {
@@ -377,11 +377,13 @@ export function syncSystemdUnit(instance: InstanceRecord) {
   writeInstanceStartScript(instance, launchShell);
 }
 
-export async function startInstanceById(id: string) {
+export async function startInstanceById(id: string, options?: { force?: boolean }) {
   const instance = getReconciledInstance(id);
   assertInstanceOp(id, instance, "start");
   beginInstanceOp(id);
   try {
+    const preflight = await assertPreflightForStart(instance, options?.force === true);
+
     const install = getGameInstallStatus();
     const branchInstall = instance.branch === "stable" ? install.stable : install.experimental;
     if (!branchInstall.installed || !branchInstall.binary) {
@@ -396,7 +398,10 @@ export async function startInstanceById(id: string) {
     const config = sanitizeNetworkAddresses(raw, host.publicIpHint);
     fs.writeFileSync(instance.configPath, JSON.stringify(prepareConfigForLaunch(config, host.publicIpHint), null, 2));
     ensureInstancePermissions(instance);
-    const warnings = [...validatePlatformCombo(config), ...collectStartWarnings(instance)];
+    const warnings = [
+      ...validatePlatformCombo(config),
+      ...(await collectStartWarnings(instance)),
+    ];
     syncSystemdUnit(instance);
     updateInstance(id, { status: "starting" });
     const result = startInstance(instance);
@@ -418,7 +423,7 @@ export async function startInstanceById(id: string) {
     }
     await notifyDiscord("started", instance, `Instance started on port ${config.publicPort}`);
     void syncInstanceStatusEmbed(id);
-    return { instance: getInstanceDetailed(id), warnings };
+    return { instance: getInstanceDetailed(id), warnings, preflight };
   } finally {
     endInstanceOp(id);
   }

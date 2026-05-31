@@ -411,6 +411,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
+    public details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -439,8 +440,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const msg = (data as { error?: string } | null)?.error ?? `Request failed (${res.status})`;
-    throw new ApiError(msg, res.status);
+    const payload = data as { error?: string; details?: unknown } | null;
+    const msg = payload?.error ?? `Request failed (${res.status})`;
+    throw new ApiError(msg, res.status, payload?.details);
   }
 
   if (res.status === 204 || data === null) return undefined as T;

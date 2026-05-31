@@ -161,7 +161,8 @@ async function buildHostStatus(quick: boolean): Promise<HostStatus> {
       port = config.publicPort;
       if (!quick) {
         modIssues = checkConfiguredMods(instance).filter((mod) => !mod.ok).length;
-        collectStartWarnings(instance).forEach((warning, index) => {
+        const startWarnings = await collectStartWarnings(instance);
+        startWarnings.forEach((warning, index) => {
           pushCheck(checks, {
             id: `${instance.slug}-warn-${index}`,
             level: "warn",

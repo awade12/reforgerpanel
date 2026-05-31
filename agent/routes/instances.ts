@@ -92,7 +92,8 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
         }
   
         if (sub === "/start" && method === "POST") {
-          const result = await startInstanceById(id);
+          const body = await ctx.readBody().catch(() => ({}));
+          const result = await startInstanceById(id, { force: body.force === true });
           respondInstanceAction(ctx.res, ctx.req, result);
           return true;
         }
@@ -185,6 +186,14 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
           return true;
         }
   
+        if (sub === "/preflight" && method === "GET") {
+          const item = getInstanceDetailed(id);
+          if (!item) sendJson(ctx.res, 404, { error: "Not found" });
+          const { runInstancePreflight } = await import("../preflight-host");
+          sendJson(ctx.res, 200, await runInstancePreflight(item, item.config));
+          return true;
+        }
+
         if (sub === "/diagnostics" && method === "GET") {
           const item = getInstanceDetailed(id);
           if (!item) sendJson(ctx.res, 404, { error: "Not found" });

@@ -40,7 +40,10 @@ export type RequestContext = {
 
 export function handleRouteError(res: http.ServerResponse, err: unknown) {
   if (err instanceof HttpError) {
-    return sendJson(res, err.status, { error: err.message });
+    return sendJson(res, err.status, {
+      error: err.message,
+      ...(err.details !== undefined ? { details: err.details } : {}),
+    });
   }
   if (err instanceof z.ZodError) {
     return sendJson(res, 400, { error: formatZodError(err) });

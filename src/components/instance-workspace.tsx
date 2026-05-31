@@ -26,7 +26,7 @@ type InstanceWorkspaceContextValue = {
   instance: InstanceDetail | null;
   error: string;
   reload: () => Promise<InstanceDetail>;
-  runAction: (kind: "start" | "stop" | "restart") => Promise<string[]>;
+  runAction: (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => Promise<string[]>;
   actionWarnings: string[];
   clearActionWarnings: () => void;
   config: ServerConfig | null;
@@ -89,7 +89,16 @@ function InstanceWorkspaceInner({
 }: Omit<InstanceWorkspaceContextValue, "config" | "setConfig" | "configRaw" | "setConfigRaw" | "jsonEditing" | "setJsonEditing" | "scenarios" | "missions" | "saving" | "saveConfig" | "message" | "actionError" | "notify" | "fail"> & {
   children: React.ReactNode;
 }) {
-  useInstanceShellHeader(instance, runAction);
+  useInstanceShellHeader(instance, async (kind, options) => {
+    try {
+      clearActionWarnings();
+      fail("");
+      await runAction(kind, options);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Action failed";
+      fail(err instanceof ApiError && err.status === 409 ? `${msg} — open Network tab for details.` : msg);
+    }
+  });
 
   const [config, setConfig] = useState<ServerConfig | null>(null);
   const [configRaw, setConfigRaw] = useState("");

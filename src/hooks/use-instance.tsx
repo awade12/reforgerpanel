@@ -30,7 +30,7 @@ export interface InstanceDetail {
   };
 }
 
-type ActionResponse = InstanceDetail | { instance: InstanceDetail; warnings?: string[] };
+type ActionResponse = InstanceDetail | { instance: InstanceDetail; warnings?: string[]; preflight?: unknown };
 
 function normalizeInstanceDetail(data: InstanceDetail): InstanceDetail {
   return {
@@ -75,8 +75,13 @@ export function useInstance(id: string) {
   }, [instance?.status, reload]);
 
   const runAction = useCallback(
-    async (kind: "start" | "stop" | "restart") => {
-      const data = await api<ActionResponse>(`instances/${id}/${kind}`, { method: "POST" });
+    async (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => {
+      const init: RequestInit = { method: "POST" };
+      if (kind === "start" && options?.force) {
+        init.headers = { "Content-Type": "application/json" };
+        init.body = JSON.stringify({ force: true });
+      }
+      const data = await api<ActionResponse>(`instances/${id}/${kind}`, init);
       const { instance: next, warnings } = normalizeActionResponse(data);
       setInstance(next);
       setActionWarnings(warnings);
@@ -92,7 +97,7 @@ export function useInstance(id: string) {
 
 export function useInstanceShellHeader(
   instance: InstanceDetail | null,
-  runAction: (kind: "start" | "stop" | "restart") => Promise<string[]>,
+  runAction: (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => Promise<string[]>,
 ) {
   const shellHeader = useMemo(() => {
     if (!instance) return null;
@@ -115,7 +120,7 @@ export function useInstanceShellHeader(
         <div className="flex gap-2">
           <InstanceActionButtons
             status={displayStatus}
-            onAction={(kind) => void runAction(kind)}
+            onAction={(kind) => void runAction(kind).catch((err) => undefined)}
           />
         </div>
       ),

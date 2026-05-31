@@ -8,7 +8,9 @@ import {
   type GameUpdateJobState,
   type GameUpdateTrigger,
 } from "../lib/shared/game-update";
+import { preflightSummary } from "../lib/shared/preflight";
 import { installOrUpdate, getInstallJob } from "./steamcmd";
+import { runHostPreflightForGameUpdate } from "./preflight-host";
 import { addAudit, getSettings, listInstances } from "./db";
 import { reconcileInstanceStatus } from "./instance-state";
 import { startInstanceById, stopInstanceById } from "./instances";
@@ -77,6 +79,11 @@ export async function runGameUpdate(options: {
   restartInstances?: boolean;
 }) {
   assertUpdateAvailable();
+
+  const hostPreflight = await runHostPreflightForGameUpdate();
+  if (!hostPreflight.canUpdateGame) {
+    throw new HttpError(409, `Pre-flight failed — ${preflightSummary(hostPreflight)}`, { preflight: hostPreflight });
+  }
 
   const settings = getSettings();
   const restartInstances = options.restartInstances ?? settings.enableModAwareUpdates;
