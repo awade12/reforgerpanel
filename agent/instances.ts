@@ -61,9 +61,15 @@ function assertInstanceOp(id: string, instance: InstanceRecord, action: string) 
   if (instanceOps.has(id)) {
     throw new HttpError(409, `Instance is busy; wait for the current ${action} to finish`);
   }
-  if (TRANSITIONAL.includes(instance.status)) {
+  if (action !== "stop" && TRANSITIONAL.includes(instance.status)) {
     throw new HttpError(409, `Instance is ${instance.status}; wait before ${action}`);
   }
+}
+
+function getReconciledInstance(id: string): InstanceRecord {
+  const raw = getInstance(id);
+  if (!raw) throw new HttpError(404, "Instance not found");
+  return reconcileInstanceStatus(raw);
 }
 
 function beginInstanceOp(id: string) {
@@ -372,8 +378,7 @@ export function syncSystemdUnit(instance: InstanceRecord) {
 }
 
 export async function startInstanceById(id: string) {
-  const instance = getInstance(id);
-  if (!instance) throw new HttpError(404, "Instance not found");
+  const instance = getReconciledInstance(id);
   assertInstanceOp(id, instance, "start");
   beginInstanceOp(id);
   try {
@@ -420,8 +425,7 @@ export async function startInstanceById(id: string) {
 }
 
 export async function stopInstanceById(id: string) {
-  const instance = getInstance(id);
-  if (!instance) throw new HttpError(404, "Instance not found");
+  const instance = getReconciledInstance(id);
   assertInstanceOp(id, instance, "stop");
   beginInstanceOp(id);
   try {
@@ -442,8 +446,7 @@ export async function stopInstanceById(id: string) {
 }
 
 export async function restartInstanceById(id: string) {
-  const instance = getInstance(id);
-  if (!instance) throw new HttpError(404, "Instance not found");
+  const instance = getReconciledInstance(id);
   assertInstanceOp(id, instance, "restart");
   beginInstanceOp(id);
   try {

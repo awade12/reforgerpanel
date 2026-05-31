@@ -311,9 +311,9 @@ export function InstanceConfigEditor({
             </SettingRow>
             <SettingRow
               label="A2S bind address"
-              hint="Leave empty to listen on all interfaces. Do not set this to your public IP — use Public address above for that."
+              hint="Leave empty to bind all interfaces (saved as 0.0.0.0). Never use your public IP here — that goes in Public address."
             >
-              <TextInput value={config.a2s?.address ?? ""} onChange={(v) => patchA2s({ address: v })} placeholder="empty or 0.0.0.0" />
+              <TextInput value={config.a2s?.address ?? ""} onChange={(v) => patchA2s({ address: v })} placeholder="0.0.0.0" />
             </SettingRow>
             <SettingRow
               label="A2S port"

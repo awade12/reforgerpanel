@@ -257,21 +257,32 @@ function omitEmptyIpv4Field(obj: Record<string, unknown>, key: string) {
   }
 }
 
+const DEFAULT_BIND_ADDRESS = "0.0.0.0";
+
+/** Game schema requires a2s/rcon address to be a valid IPv4 — use all-interfaces bind. */
+export function resolveBindAddressForDisk(value: unknown, publicAddress?: string): string {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  const pub = publicAddress?.trim() ?? "";
+  if (!trimmed || (pub && trimmed === pub)) return DEFAULT_BIND_ADDRESS;
+  return trimmed;
+}
+
 /** Strip fields the game JSON schema rejects before writing config.json. */
 export function configForDisk(config: ServerConfig): Record<string, unknown> {
   const obj = normalizeLegacyConfig(JSON.parse(JSON.stringify(config))) as Record<string, unknown>;
   omitEmptyIpv4Field(obj, "bindAddress");
 
+  const publicAddress = typeof obj.publicAddress === "string" ? obj.publicAddress : "";
   const a2s = obj.a2s as Record<string, unknown> | undefined;
   if (a2s) {
-    omitEmptyIpv4Field(a2s, "address");
+    a2s.address = resolveBindAddressForDisk(a2s.address, publicAddress);
   }
 
   const rcon = obj.rcon as { password?: string; address?: string } | undefined;
   if (!rcon?.password || rcon.password.length < 3) {
     delete obj.rcon;
   } else {
-    omitEmptyIpv4Field(rcon, "address");
+    rcon.address = resolveBindAddressForDisk(rcon.address, publicAddress);
   }
 
   return obj;

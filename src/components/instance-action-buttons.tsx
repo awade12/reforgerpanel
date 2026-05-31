@@ -16,9 +16,17 @@ export function InstanceActionButtons({
   const busy = isInstanceBusy(status);
 
   if (busy) {
-    return (
-      <Button disabled={disabled ?? true}>{status === "starting" ? "Starting…" : "Stopping…"}</Button>
-    );
+    if (status === "starting") {
+      return (
+        <>
+          <Button variant="ghost" disabled={disabled} onClick={() => onAction("stop")}>
+            Stop
+          </Button>
+          <Button disabled={disabled ?? true}>Starting…</Button>
+        </>
+      );
+    }
+    return <Button disabled={disabled ?? true}>Stopping…</Button>;
   }
 
   if (live) {

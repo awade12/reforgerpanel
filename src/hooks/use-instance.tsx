@@ -6,7 +6,7 @@ import type { InstanceAlertSettings } from "@/lib/shared/types";
 import { normalizeInstanceAlertsResponse } from "@/lib/shared/secrets";
 import { api, useShellHeader } from "@/components/Shell";
 import { InstanceActionButtons } from "@/components/instance-action-buttons";
-import { isInstanceLive } from "@/lib/shared/instance-state";
+import { isInstanceBusy, isInstanceLive } from "@/lib/shared/instance-state";
 import type { InstanceStatus } from "@/lib/shared/types";
 
 export interface InstanceDetail {
@@ -64,11 +64,15 @@ export function useInstance(id: string) {
 
   useEffect(() => {
     void reload().catch((err) => setError(err instanceof Error ? err.message : "Failed to load"));
+  }, [reload]);
+
+  useEffect(() => {
+    const pollMs = instance && isInstanceBusy(instance.status) ? 3000 : 15000;
     const timer = setInterval(() => {
       void reload().catch(() => undefined);
-    }, 15000);
+    }, pollMs);
     return () => clearInterval(timer);
-  }, [reload]);
+  }, [instance?.status, reload]);
 
   const runAction = useCallback(
     async (kind: "start" | "stop" | "restart") => {

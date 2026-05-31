@@ -108,7 +108,7 @@ export function buildRegistrationDiagnostics(config: ServerConfig, listed?: bool
       ok: listed,
       detail: listed
         ? "Query port answered — server looks listed"
-        : "No A2S response — wait ~30s after start, ensure a2s bind is unset or 0.0.0.0 (not public IP), and UDP query port is open",
+        : "No A2S response — wait ~30s after start, ensure a2s bind is 0.0.0.0 (not public IP), and UDP query port is open",
     });
   }
 

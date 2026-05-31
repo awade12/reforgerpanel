@@ -18,6 +18,8 @@ export function writeRuntimeCache(instanceId: string, meta: import("../lib/share
 
 export const RUNTIME_CACHE_MS = 10_000;
 
+const STUCK_STARTING_MS = 3 * 60 * 1000;
+
 function systemdToStatus(systemd: string, current: InstanceStatus): InstanceStatus {
   if (systemd === "active") return "running";
   if (systemd === "activating") return "starting";
@@ -27,9 +29,21 @@ function systemdToStatus(systemd: string, current: InstanceStatus): InstanceStat
   return "stopped";
 }
 
+function isStuckStarting(instance: InstanceRecord, systemd: string): boolean {
+  if (instance.status !== "starting" || systemd === "active" || systemd === "activating") {
+    return false;
+  }
+  const anchor = instance.lastStartedAt ?? instance.updatedAt;
+  if (!anchor) return true;
+  return Date.now() - new Date(anchor).getTime() > STUCK_STARTING_MS;
+}
+
 export function reconcileInstanceStatus(instance: InstanceRecord): InstanceRecord {
   const systemd = getInstanceSystemdStatus(instance);
-  const next = systemdToStatus(systemd, instance.status);
+  let next = systemdToStatus(systemd, instance.status);
+  if (isStuckStarting(instance, systemd)) {
+    next = systemd === "failed" ? "crashed" : "stopped";
+  }
   if (instance.status === next) return instance;
 
   invalidateRuntimeCache(instance.id);

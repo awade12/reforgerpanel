@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { getInstance, listInstances, updateInstance, clearBotDashboardRecovery } from "./db";
 import { reconcileInstanceStatus } from "./instance-state";
-import { isActive, restartInstance } from "./systemd";
+import { getInstanceSystemdStatus, isActive, restartInstance } from "./systemd";
 import { monitorInstanceAlerts, notifyDiscord, syncInstanceStatusEmbed } from "./alerts";
 
 const restartWindows = new Map<string, number[]>();
@@ -70,8 +70,11 @@ export function listLogFiles(profilePath: string): string[] {
 export function startMonitorLoop() {
   setInterval(async () => {
     for (const raw of listInstances()) {
-      const instance = reconcileInstanceStatus(raw);
+      let instance = reconcileInstanceStatus(raw);
       const active = isActive(instance);
+      if (instance.status === "starting" && !active && getInstanceSystemdStatus(instance) !== "activating") {
+        instance = updateInstance(instance.id, { status: "stopped" }) ?? { ...instance, status: "stopped" };
+      }
       if (instance.status === "running" && !active) {
         const now = Date.now();
         const history = restartWindows.get(instance.id) ?? [];
