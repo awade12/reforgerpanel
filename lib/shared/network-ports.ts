@@ -30,15 +30,18 @@ export function resolveInstancePorts(config: ServerConfig): InstancePorts {
 }
 
 export function buildUfwRules(ports: InstancePorts, slug: string) {
-  const lines = [
-    `# ${slug} — Arma Reforger`,
-    `sudo ufw allow ${ports.game}/udp comment 'Reforger ${slug} game'`,
-    `sudo ufw allow ${ports.a2s}/udp comment 'Reforger ${slug} A2S'`,
+  const rules = [
+    `ufw allow ${ports.game}/udp comment 'Reforger ${slug} game'`,
+    `ufw allow ${ports.a2s}/udp comment 'Reforger ${slug} A2S'`,
   ];
   if (ports.rcon > 0) {
-    lines.push(`sudo ufw allow ${ports.rcon}/udp comment 'Reforger ${slug} RCon'`);
+    rules.push(`ufw allow ${ports.rcon}/udp comment 'Reforger ${slug} RCon'`);
   }
-  return lines;
+  return rules;
+}
+
+export function buildUfwRulesDisplay(ports: InstancePorts, slug: string) {
+  return [`# ${slug} — Arma Reforger`, ...buildUfwRules(ports, slug).map((r) => `sudo ${r}`)];
 }
 
 export type RegistrationCheck = {

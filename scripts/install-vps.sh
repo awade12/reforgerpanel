@@ -244,6 +244,7 @@ install_systemd_units() {
 
   echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/local/bin/reforger-ctl" >/etc/sudoers.d/reforgerpanel
   echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/bin/docker" >>/etc/sudoers.d/reforgerpanel
+  echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/sbin/ufw, /usr/bin/ufw" >>/etc/sudoers.d/reforgerpanel
   chmod 440 /etc/sudoers.d/reforgerpanel
   visudo -cf /etc/sudoers.d/reforgerpanel
   systemctl daemon-reload

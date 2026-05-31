@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ServerConfig } from "@/lib/shared/config-schema";
-import { buildRegistrationDiagnostics, buildUfwRules, resolveInstancePorts } from "@/lib/shared/network-ports";
+import { buildRegistrationDiagnostics, buildUfwRulesDisplay, resolveInstancePorts } from "@/lib/shared/network-ports";
 import { Button, api, ApiError } from "@/components/Shell";
 
 type RegistrationCheck = {
@@ -57,7 +57,7 @@ export function InstanceNetworkPanel({
   const [firewallBusy, setFirewallBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
   const ports = useMemo(() => resolveInstancePorts(config), [config]);
-  const ufwRules = useMemo(() => buildUfwRules(ports, slug), [ports, slug]);
+  const ufwRules = useMemo(() => buildUfwRulesDisplay(ports, slug), [ports, slug]);
 
   const refresh = useCallback(async () => {
     setLoading(true);

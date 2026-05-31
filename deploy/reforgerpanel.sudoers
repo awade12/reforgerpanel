@@ -1,2 +1,4 @@
 ubuntu ALL=(root) NOPASSWD: /usr/local/bin/reforger-ctl
 ubuntu ALL=(root) NOPASSWD: /usr/bin/docker
+ubuntu ALL=(root) NOPASSWD: /usr/sbin/ufw
+ubuntu ALL=(root) NOPASSWD: /usr/bin/ufw

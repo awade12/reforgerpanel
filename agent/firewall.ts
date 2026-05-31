@@ -22,9 +22,9 @@ export function applyUfwRules(config: ServerConfig, slug: string) {
   const errors: string[] = [];
 
   for (const rule of rules) {
-    const cmd = rule.replace(/^sudo\s+/, "");
+    if (!rule.trim() || rule.trim().startsWith("#")) continue;
     try {
-      execSync(`sudo -n ${cmd}`, { encoding: "utf8" });
+      execSync(`sudo -n ${rule}`, { encoding: "utf8", shell: "/bin/bash" });
       applied.push(rule);
     } catch (err) {
       errors.push(err instanceof Error ? err.message : String(err));
