@@ -172,6 +172,7 @@ ensure_env_secrets() {
     sed -i 's|^STEAMCMD_PATH=.*|STEAMCMD_PATH=/opt/reforger/steamcmd/steamcmd.sh|' "${ENV_FILE}"
   fi
   grep -q '^PANEL_DATA_DIR=' "${ENV_FILE}" || echo "PANEL_DATA_DIR=/opt/reforger/panel-data" >>"${ENV_FILE}"
+  grep -q '^PANEL_ROOT=' "${ENV_FILE}" || echo "PANEL_ROOT=${INSTALL_DIR}" >>"${ENV_FILE}"
   grep -q '^PORT=' "${ENV_FILE}" || echo "PORT=${PANEL_PORT}" >>"${ENV_FILE}"
 
   if grep -q '^HOSTNAME=' "${ENV_FILE}"; then

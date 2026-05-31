@@ -27,7 +27,18 @@ type PanelUpdateStatus = {
   behindCommits: number | null;
   branch: string | null;
   nextScheduledAt: string | null;
+  phase: string | null;
+  elapsedSec: number | null;
+  logTail: string[];
+  logFile: string;
 };
+
+function formatElapsed(sec: number | null | undefined) {
+  if (sec == null) return "";
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(initialSettings);
@@ -69,6 +80,18 @@ export default function SettingsPage() {
       if (panelPollRef.current) clearInterval(panelPollRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!panelUpdate?.running) return;
+    if (panelPollRef.current) return;
+    panelPollRef.current = setInterval(() => void loadPanelUpdate(), 3000);
+    return () => {
+      if (panelPollRef.current) {
+        clearInterval(panelPollRef.current);
+        panelPollRef.current = null;
+      }
+    };
+  }, [panelUpdate?.running]);
 
   function patch(partial: Partial<Settings>) {
     setSettings((prev) => ({ ...prev, ...partial }));
@@ -128,7 +151,23 @@ export default function SettingsPage() {
                     : ""}
               </p>
             )}
-            {panelUpdate?.running && <p className="text-sm text-emerald-400">Panel update running…</p>}
+            {panelUpdate?.running && (
+              <div className="grid gap-2 rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-3">
+                <p className="text-sm text-emerald-400">
+                  Panel update running
+                  {panelUpdate.phase ? ` — ${panelUpdate.phase}` : "…"}
+                  {panelUpdate.elapsedSec != null ? ` (${formatElapsed(panelUpdate.elapsedSec)})` : ""}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  npm ci + build often take 5–15 minutes on a VPS. The page may reload when services restart.
+                </p>
+                {panelUpdate.logTail.length > 0 && (
+                  <pre className="max-h-40 overflow-auto rounded bg-zinc-950 p-2 text-xs text-zinc-400">
+                    {panelUpdate.logTail.join("\n")}
+                  </pre>
+                )}
+              </div>
+            )}
             {panelUpdate?.ok === true && !panelUpdate.running && panelUpdate.finishedAt && (
               <p className="text-sm text-emerald-400">Last panel update succeeded</p>
             )}

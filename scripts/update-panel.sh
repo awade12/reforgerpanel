@@ -3,10 +3,11 @@ set -euo pipefail
 
 INSTALL_DIR="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 STATE_FILE="${PANEL_UPDATE_STATE_FILE:-${INSTALL_DIR}/data/panel-update-state.json}"
-LOG_FILE="${PANEL_UPDATE_LOG_FILE:-/var/log/reforgerpanel-update.log}"
+DATA_DIR="$(dirname "${STATE_FILE}")"
+LOG_FILE="${PANEL_UPDATE_LOG_FILE:-${DATA_DIR}/panel-update.log}"
 
-mkdir -p "$(dirname "${STATE_FILE}")"
-touch "${LOG_FILE}" 2>/dev/null || LOG_FILE="${INSTALL_DIR}/data/panel-update.log"
+mkdir -p "${DATA_DIR}"
+touch "${LOG_FILE}"
 exec >>"${LOG_FILE}" 2>&1
 
 started_at="$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"
@@ -51,15 +52,19 @@ if [[ "${COMMIT_BEFORE}" == "${COMMIT_AFTER}" ]]; then
   exit 0
 fi
 
+echo "Running npm ci (may take several minutes)…"
 npm ci
+echo "Running npm run build (may take several minutes)…"
 npm run build
+echo "Running db migrate…"
 npm run db:migrate || echo "db:migrate skipped or failed (non-fatal)"
 
 echo "Restarting panel services…"
+write_state true "" "${COMMIT_AFTER}"
+
 sudo systemctl restart reforgerpanel-agent reforgerpanel
 if systemctl is-enabled reforgerpanel-bot &>/dev/null; then
   sudo systemctl restart reforgerpanel-bot || true
 fi
 
-write_state true "" "${COMMIT_AFTER}"
 echo "=== Panel update finished OK ==="
