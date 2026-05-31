@@ -97,7 +97,7 @@ fi
 grep -q '^STEAM_DOCKER_IMAGE=' "${ENV_FILE}" 2>/dev/null || echo "STEAM_DOCKER_IMAGE=${DOCKER_IMAGE}" >>"${ENV_FILE}"
 
 echo "[fix-steamcmd] Testing Docker SteamCMD…"
-docker run --rm "${DOCKER_IMAGE}" +quit
+docker run --rm "${DOCKER_IMAGE}" steamcmd +quit
 
 echo ""
 echo "Docker SteamCMD OK. Game Install in the panel will use Docker."

@@ -191,7 +191,7 @@ async function runSteamCmdDocker(args: string[], onLine?: InstallProgressHandler
   onLine?.(`Docker SteamCMD (${agentConfig.steamDockerImage}) → ${mountDir}`);
   return spawnSteamCmd(
     "sudo",
-    ["-n", "docker", "run", "--rm", "-v", `${mountDir}:/game`, agentConfig.steamDockerImage, ...inner],
+    ["-n", "docker", "run", "--rm", "-v", `${mountDir}:/game`, agentConfig.steamDockerImage, "steamcmd", ...inner],
     { env: process.env },
     onLine,
   );
