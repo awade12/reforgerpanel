@@ -93,10 +93,11 @@ function InstanceWorkspaceInner({
     try {
       clearActionWarnings();
       fail("");
-      await runAction(kind, options);
+      return await runAction(kind, options);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Action failed";
       fail(err instanceof ApiError && err.status === 409 ? `${msg} — open Network tab for details.` : msg);
+      return [];
     }
   });
 
