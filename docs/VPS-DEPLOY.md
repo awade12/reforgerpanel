@@ -2,6 +2,8 @@
 
 Deploy on a fresh **Ubuntu 22.04 / 24.04** VPS (2 GB RAM minimum, 4 GB+ recommended for game server + build).
 
+**Repository:** [github.com/awade12/reforgerpanel](https://github.com/awade12/reforgerpanel)
+
 Production installs **require HTTPS**. The installer configures [Caddy](https://caddyserver.com/docs/automatic-https) as a reverse proxy with automatic Let's Encrypt certificates. The panel itself listens on **127.0.0.1:3000 only** — it is not exposed on the public internet.
 
 ## Before you start
@@ -42,7 +44,7 @@ Cutover stops dev panel/agent on 3000/9100, backs up `/etc/reforgerpanel/env`, a
 ## Install
 
 ```bash
-git clone <your-repo-url> /opt/reforgerpanel
+git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
 cd /opt/reforgerpanel
 sudo bash scripts/install-vps.sh --domain panel.example.com --email admin@example.com
 ```
@@ -95,7 +97,7 @@ Session cookies use `Secure` + `HttpOnly` when `COOKIE_SECURE=true` (set automat
 ## Updating
 
 ```bash
-cd /opt/reforgerpanel
+cd /opt/reforgerpanel   # or: git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
 git pull
 npm ci && npm run build && npm run db:migrate
 sudo systemctl restart reforgerpanel-agent reforgerpanel

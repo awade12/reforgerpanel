@@ -2,6 +2,14 @@
   "name": "reforgerpanel",
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/awade12/reforgerpanel.git"
+  },
+  "homepage": "https://github.com/awade12/reforgerpanel#readme",
+  "bugs": {
+    "url": "https://github.com/awade12/reforgerpanel/issues"
+  },
   "engines": {
     "node": ">=20"
   },

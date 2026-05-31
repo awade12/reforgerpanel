@@ -32,7 +32,7 @@ Options:
   -h, --help        Show this help
 
 Example:
-  git clone https://github.com/you/reforgerpanel.git /opt/reforgerpanel
+  git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
   cd /opt/reforgerpanel
   sudo bash scripts/install-vps.sh --domain panel.example.com --email admin@example.com
 EOF

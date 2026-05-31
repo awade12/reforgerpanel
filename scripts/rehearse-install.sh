@@ -229,6 +229,8 @@ if [[ "${CUTOVER}" -eq 0 ]]; then
   echo "  sudo bash scripts/rehearse-install.sh --domain ${DOMAIN} --email you@example.com --cutover"
   echo
   echo "Fresh VPS (empty machine):"
+  echo "  git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel"
+  echo "  cd /opt/reforgerpanel"
   echo "  sudo bash scripts/install-vps.sh --domain ${DOMAIN} --email you@example.com"
   echo
   echo "Results: ${PASS} passed, ${FAIL} failed, ${WARN} warnings"
