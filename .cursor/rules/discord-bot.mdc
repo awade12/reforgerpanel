@@ -1,0 +1,39 @@
+---
+description: Discord bot source layout and file-size limits for src/bot
+globs: src/bot/**/*
+alwaysApply: false
+---
+
+# Reforger Panel Discord bot
+
+## Layout
+
+- Entry: `src/bot/index.ts` — loads config, deploys slash commands, starts client.
+- Commands live under `src/bot/commands/<group>/` (e.g. `gen`, `admin`).
+- Each command file exports `export const command: BotCommand`.
+- Shared command helpers go in `commands/<group>/utils/` (never registered as commands).
+- Shared bot utilities go in `src/bot/utils/`.
+
+## Slash command deploy
+
+- Do **not** add a separate deploy script.
+- Registration runs on every bot startup via `deployCommands()` in `src/bot/utils/deploy-commands.ts`.
+
+## Agent integration
+
+- Call the host agent through `src/bot/utils/agent.ts` (`agentFetch`), not duplicate HTTP logic.
+- Bot credentials load from panel settings (`GET /settings`) via `lib/shared/discord-bot-settings.ts`.
+- Reuse shared panel types and embed helpers from `lib/shared/` when possible.
+
+## File size (500 LOC)
+
+- Keep every file under **500 lines**. Split before hitting the limit.
+- Extract helpers into `utils/` or `commands/<group>/utils/` and re-import.
+- Prefer many small modules over one large command file.
+
+## Practices
+
+- Dashboard-first: prefer read-only embeds (`/dashboard`, `/status`, `/instances`, `/host`) over chat spam.
+- Admin-only lifecycle commands (`start`, `stop`, `restart`) must use `adminOnly: true` and `requireAdmin`.
+- Handle errors with `utils/errors.ts`; defer replies before agent calls.
+- Use discord.js **14.x** APIs (`SlashCommandBuilder`, `REST`, `Routes`).

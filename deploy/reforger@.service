@@ -1,0 +1,15 @@
+[Unit]
+Description=Arma Reforger Server (%i)
+After=network.target
+
+[Service]
+Type=simple
+User=reforger
+WorkingDirectory=/opt/reforger/instances/%i
+ExecStart=/bin/bash /opt/reforger/instances/%i/start.sh
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

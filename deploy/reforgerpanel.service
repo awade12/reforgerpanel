@@ -1,0 +1,16 @@
+[Unit]
+Description=Reforger Panel Web UI
+After=network.target reforgerpanel-agent.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/reforgerpanel
+EnvironmentFile=/etc/reforgerpanel/env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

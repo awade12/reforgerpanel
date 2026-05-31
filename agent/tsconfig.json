@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "outDir": "dist/agent"
+  },
+  "include": ["agent/**/*.ts", "lib/shared/**/*.ts"],
+  "exclude": ["node_modules"]
+}

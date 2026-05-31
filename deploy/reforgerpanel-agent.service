@@ -1,0 +1,16 @@
+[Unit]
+Description=Reforger Panel Host Agent
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/reforgerpanel
+EnvironmentFile=/etc/reforgerpanel/env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run agent
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
