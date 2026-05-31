@@ -24,6 +24,6 @@ export const agentConfig = {
   steamcmd: process.env.STEAMCMD_PATH ?? "/opt/reforger/steamcmd/steamcmd.sh",
   steamHome: process.env.STEAM_HOME ?? "/opt/reforger/steam-home",
   steamUseDocker: ["1", "true", "yes"].includes((process.env.STEAM_USE_DOCKER ?? "").toLowerCase()),
-  steamDockerImage: process.env.STEAM_DOCKER_IMAGE ?? "cm2network/steamcmd",
+  steamDockerImage: process.env.STEAM_DOCKER_IMAGE ?? "gameservermanagers/steamcmd:latest",
   runAsUser: process.env.REFORGER_USER ?? process.env.USER ?? "ubuntu",
 };

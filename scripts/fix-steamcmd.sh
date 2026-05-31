@@ -12,7 +12,7 @@ STEAMCMD_DIR="/opt/reforger/steamcmd"
 STEAMCMD_BIN="${STEAMCMD_DIR}/steamcmd.sh"
 STEAM_HOME="/opt/reforger/steam-home"
 ENV_FILE="/etc/reforgerpanel/env"
-DOCKER_IMAGE="${STEAM_DOCKER_IMAGE:-cm2network/steamcmd}"
+DOCKER_IMAGE="${STEAM_DOCKER_IMAGE:-gameservermanagers/steamcmd:latest}"
 
 native_test() {
   timeout 120 sudo -u "${PANEL_USER}" env \
@@ -94,10 +94,14 @@ if grep -q '^STEAM_USE_DOCKER=' "${ENV_FILE}" 2>/dev/null; then
 else
   echo "STEAM_USE_DOCKER=true" >>"${ENV_FILE}"
 fi
-grep -q '^STEAM_DOCKER_IMAGE=' "${ENV_FILE}" 2>/dev/null || echo "STEAM_DOCKER_IMAGE=${DOCKER_IMAGE}" >>"${ENV_FILE}"
+if grep -q '^STEAM_DOCKER_IMAGE=' "${ENV_FILE}" 2>/dev/null; then
+  sed -i "s|^STEAM_DOCKER_IMAGE=.*|STEAM_DOCKER_IMAGE=${DOCKER_IMAGE}|" "${ENV_FILE}"
+else
+  echo "STEAM_DOCKER_IMAGE=${DOCKER_IMAGE}" >>"${ENV_FILE}"
+fi
 
 echo "[fix-steamcmd] Testing Docker SteamCMD…"
-docker run --rm "${DOCKER_IMAGE}" steamcmd +quit
+docker run --rm "${DOCKER_IMAGE}" +quit
 
 echo ""
 echo "Docker SteamCMD OK. Game Install in the panel will use Docker."

@@ -134,7 +134,7 @@ function dockerMountDir(args: string[]) {
 }
 
 function dockerInnerArgs(args: string[]) {
-  return args.map((arg, i) => (args[i - 1] === "+force_install_dir" ? "/game" : arg));
+  return args.map((arg, i) => (args[i - 1] === "+force_install_dir" ? "/data" : arg));
 }
 
 function spawnSteamCmd(
@@ -191,7 +191,7 @@ async function runSteamCmdDocker(args: string[], onLine?: InstallProgressHandler
   onLine?.(`Docker SteamCMD (${agentConfig.steamDockerImage}) → ${mountDir}`);
   return spawnSteamCmd(
     "sudo",
-    ["-n", "docker", "run", "--rm", "-v", `${mountDir}:/game`, agentConfig.steamDockerImage, "steamcmd", ...inner],
+    ["-n", "docker", "run", "--rm", "-v", `${mountDir}:/data`, agentConfig.steamDockerImage, ...inner],
     { env: process.env },
     onLine,
   );
