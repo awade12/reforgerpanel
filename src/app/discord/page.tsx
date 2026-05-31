@@ -35,7 +35,7 @@ export default function DiscordPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
     });
-    setMessage("Discord settings saved");
+    setMessage("Discord settings saved Saved successfully");
   }
 
   async function testWebhook() {
