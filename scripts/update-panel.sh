@@ -59,6 +59,12 @@ npm run build
 echo "Running db migrate…"
 npm run db:migrate || echo "db:migrate skipped or failed (non-fatal)"
 
+if [[ ! -f "${INSTALL_DIR}/.next/BUILD_ID" ]]; then
+  echo "ERROR: No production build (.next/BUILD_ID missing) — not restarting services"
+  write_state false "Build incomplete — run npm run build and restart manually" "${COMMIT_AFTER}"
+  exit 1
+fi
+
 echo "Restarting panel services…"
 write_state true "" "${COMMIT_AFTER}"
 
