@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { ArrowLeftIcon } from "lucide-react";
 import type { ServerConfig } from "@/lib/shared/config-schema";
 import { InstancePageBanners } from "@/components/instance-page-banners";
@@ -89,18 +89,6 @@ function InstanceWorkspaceInner({
 }: Omit<InstanceWorkspaceContextValue, "config" | "setConfig" | "configRaw" | "setConfigRaw" | "jsonEditing" | "setJsonEditing" | "scenarios" | "missions" | "saving" | "saveConfig" | "message" | "actionError" | "notify" | "fail"> & {
   children: React.ReactNode;
 }) {
-  useInstanceShellHeader(instance, async (kind, options) => {
-    try {
-      clearActionWarnings();
-      fail("");
-      return await runAction(kind, options);
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Action failed";
-      fail(err instanceof ApiError && err.status === 409 ? `${msg} — open Network tab for details.` : msg);
-      return [];
-    }
-  });
-
   const [config, setConfig] = useState<ServerConfig | null>(null);
   const [configRaw, setConfigRaw] = useState("");
   const [jsonEditing, setJsonEditing] = useState(false);
@@ -109,6 +97,33 @@ function InstanceWorkspaceInner({
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const notify = useCallback((msg: string) => {
+    setActionError("");
+    setMessage(msg);
+  }, []);
+
+  const fail = useCallback((msg: string) => {
+    setMessage("");
+    setActionError(msg);
+  }, []);
+
+  const handleHeaderAction = useCallback(
+    async (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => {
+      try {
+        clearActionWarnings();
+        fail("");
+        return await runAction(kind, options);
+      } catch (err) {
+        const msg = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Action failed";
+        fail(err instanceof ApiError && err.status === 409 ? `${msg} — open Network tab for details.` : msg);
+        return [];
+      }
+    },
+    [clearActionWarnings, fail, runAction],
+  );
+
+  useInstanceShellHeader(instance, handleHeaderAction);
 
   useEffect(() => {
     if (!instance) return;
@@ -126,17 +141,7 @@ function InstanceWorkspaceInner({
       .catch(() => undefined);
   }, [instance?.branch, instance]);
 
-  function notify(msg: string) {
-    setActionError("");
-    setMessage(msg);
-  }
-
-  function fail(msg: string) {
-    setMessage("");
-    setActionError(msg);
-  }
-
-  async function saveConfig() {
+  const saveConfig = useCallback(async () => {
     clearActionWarnings();
     fail("");
     setMessage("");
@@ -158,7 +163,7 @@ function InstanceWorkspaceInner({
     } finally {
       setSaving(false);
     }
-  }
+  }, [clearActionWarnings, config, configRaw, fail, id, jsonEditing, notify, reload]);
 
   return (
     <InstanceWorkspaceContext.Provider

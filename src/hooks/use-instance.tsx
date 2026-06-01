@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ServerConfig } from "@/lib/shared/config-schema";
 import type { InstanceAlertSettings } from "@/lib/shared/types";
 import { normalizeInstanceAlertsResponse } from "@/lib/shared/secrets";
@@ -99,6 +99,9 @@ export function useInstanceShellHeader(
   instance: InstanceDetail | null,
   runAction: (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => Promise<string[]>,
 ) {
+  const runActionRef = useRef(runAction);
+  runActionRef.current = runAction;
+
   const shellHeader = useMemo(() => {
     if (!instance) return null;
 
@@ -120,12 +123,12 @@ export function useInstanceShellHeader(
         <div className="flex gap-2">
           <InstanceActionButtons
             status={displayStatus}
-            onAction={(kind) => void runAction(kind).catch((err) => undefined)}
+            onAction={(kind) => void runActionRef.current(kind).catch(() => undefined)}
           />
         </div>
       ),
     };
-  }, [instance, runAction]);
+  }, [instance]);
 
   useShellHeader(shellHeader);
 }

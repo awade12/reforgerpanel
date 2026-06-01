@@ -6,7 +6,7 @@ export function InstanceOverviewStrip() {
   const { instance } = useInstanceWorkspace();
   if (!instance) return null;
 
-  const scenario = instance.config.game.scenarioId.split("/").pop();
+  const scenario = instance.config.game?.scenarioId?.split("/").pop() ?? "—";
 
   return (
     <div className="mb-8 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
