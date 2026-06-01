@@ -25,6 +25,12 @@ EOF
 }
 
 on_err() {
+  if [[ -n "${NEXT_BACKUP_DIR:-}" && -d "${NEXT_BACKUP_DIR}" ]]; then
+    echo "Restoring previous production build…"
+    rm -rf "${INSTALL_DIR}/.next"
+    mv "${NEXT_BACKUP_DIR}" "${INSTALL_DIR}/.next"
+  fi
+  sudo systemctl start reforgerpanel 2>/dev/null || true
   write_state false "Update failed — see ${LOG_FILE}" "${COMMIT_AFTER:-}"
 }
 trap on_err ERR
@@ -52,6 +58,17 @@ if [[ "${COMMIT_BEFORE}" == "${COMMIT_AFTER}" ]]; then
   exit 0
 fi
 
+NEXT_BACKUP_DIR=""
+if [[ -f "${INSTALL_DIR}/.next/BUILD_ID" ]]; then
+  NEXT_BACKUP_DIR="${INSTALL_DIR}/.next.backup.$$"
+  rm -rf "${NEXT_BACKUP_DIR}"
+  cp -a "${INSTALL_DIR}/.next" "${NEXT_BACKUP_DIR}"
+  echo "Backed up existing .next build"
+fi
+
+echo "Stopping panel web UI during build (agent stays up)…"
+sudo systemctl stop reforgerpanel 2>/dev/null || true
+
 echo "Running npm ci (may take several minutes)…"
 npm ci
 echo "Running npm run build (may take several minutes)…"
@@ -64,6 +81,9 @@ if [[ ! -f "${INSTALL_DIR}/.next/BUILD_ID" ]]; then
   write_state false "Build incomplete — run npm run build and restart manually" "${COMMIT_AFTER}"
   exit 1
 fi
+
+rm -rf "${NEXT_BACKUP_DIR:-}"
+NEXT_BACKUP_DIR=""
 
 echo "Restarting panel services…"
 write_state true "" "${COMMIT_AFTER}"

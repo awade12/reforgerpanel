@@ -51,6 +51,19 @@ else
   bad "panel not responding on 127.0.0.1:${PORT:-3000}"
 fi
 
+panel_root="${PANEL_ROOT:-/opt/reforgerpanel}"
+if [[ -f "${panel_root}/.next/BUILD_ID" ]]; then
+  ok "production build present (${panel_root}/.next/BUILD_ID)"
+else
+  bad "missing production build — run: cd ${panel_root} && npm run build"
+fi
+
+if [[ -n "${PANEL_ROOT:-}" ]]; then
+  ok "PANEL_ROOT=${PANEL_ROOT}"
+else
+  warn "PANEL_ROOT not set in env (panel updates may use wrong directory)"
+fi
+
 if [[ -n "${PANEL_PUBLIC_URL:-}" ]]; then
   domain="${PANEL_PUBLIC_URL#https://}"
   domain="${domain#http://}"

@@ -2,4 +2,4 @@ ubuntu ALL=(root) NOPASSWD: /usr/local/bin/reforger-ctl
 ubuntu ALL=(root) NOPASSWD: /usr/bin/docker
 ubuntu ALL=(root) NOPASSWD: /usr/sbin/ufw
 ubuntu ALL=(root) NOPASSWD: /usr/bin/ufw
-ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-agent, /bin/systemctl restart reforgerpanel, /bin/systemctl restart reforgerpanel-bot
+ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-agent, /bin/systemctl restart reforgerpanel, /bin/systemctl restart reforgerpanel-bot, /bin/systemctl stop reforgerpanel, /bin/systemctl start reforgerpanel

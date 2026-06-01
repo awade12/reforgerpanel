@@ -8,9 +8,12 @@ User=ubuntu
 WorkingDirectory=/home/ubuntu/reforgerpanel
 EnvironmentFile=/etc/reforgerpanel/env
 Environment=NODE_ENV=production
+ExecStartPre=/bin/bash -c 'test -f .next/BUILD_ID || { echo "Missing production build — run: cd $PWD && npm run build"; exit 1; }'
 ExecStart=/usr/bin/npm run start
 Restart=on-failure
 RestartSec=5
+StartLimitIntervalSec=120
+StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target

@@ -228,6 +228,7 @@ update_production_env() {
   else
     echo "PANEL_PUBLIC_HOST=${DOMAIN}" >>"${ENV_FILE}"
   fi
+  grep -q '^PANEL_ROOT=' "${ENV_FILE}" || echo "PANEL_ROOT=${INSTALL_DIR}" >>"${ENV_FILE}"
   finalize_env_permissions
 }
 
@@ -246,7 +247,7 @@ install_systemd_units() {
   echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/local/bin/reforger-ctl" >/etc/sudoers.d/reforgerpanel
   echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/bin/docker" >>/etc/sudoers.d/reforgerpanel
   echo "${PANEL_USER} ALL=(root) NOPASSWD: /usr/sbin/ufw, /usr/bin/ufw" >>/etc/sudoers.d/reforgerpanel
-  echo "${PANEL_USER} ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-agent, /bin/systemctl restart reforgerpanel, /bin/systemctl restart reforgerpanel-bot" >>/etc/sudoers.d/reforgerpanel
+  echo "${PANEL_USER} ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-agent, /bin/systemctl restart reforgerpanel, /bin/systemctl restart reforgerpanel-bot, /bin/systemctl stop reforgerpanel, /bin/systemctl start reforgerpanel" >>/etc/sudoers.d/reforgerpanel
   chmod 440 /etc/sudoers.d/reforgerpanel
   visudo -cf /etc/sudoers.d/reforgerpanel
   systemctl daemon-reload
@@ -329,6 +330,7 @@ fi
 install_caddy
 
 chown -R "${PANEL_USER}:reforger" "${INSTALL_DIR}" 2>/dev/null || chown -R "${PANEL_USER}:${PANEL_USER}" "${INSTALL_DIR}"
+chmod +x "${INSTALL_DIR}/scripts/update-panel.sh" 2>/dev/null || true
 
 if [[ "${EXISTING}" -eq 0 ]]; then
   log "Installing npm dependencies…"
@@ -338,6 +340,10 @@ fi
 if [[ "${SKIP_BUILD}" -eq 0 ]]; then
   log "Building Next.js panel (may take a few minutes on small VPS)…"
   run_as_panel "npm run build"
+  if ! run_as_panel "test -f .next/BUILD_ID"; then
+    echo "npm run build did not produce .next/BUILD_ID" >&2
+    exit 1
+  fi
 fi
 
 log "Initializing PostgreSQL schema…"
