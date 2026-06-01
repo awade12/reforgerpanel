@@ -172,7 +172,17 @@ export default function SettingsPage() {
               <p className="text-sm text-emerald-400">Last panel update succeeded</p>
             )}
             {panelUpdate?.ok === false && !panelUpdate.running && panelUpdate.error && (
-              <p className="text-sm text-red-400">{panelUpdate.error}</p>
+              <div className="grid gap-2 rounded-lg border border-red-900/50 bg-red-950/20 p-3">
+                <p className="text-sm text-red-400">{panelUpdate.error}</p>
+                {panelUpdate.logTail.length > 0 && (
+                  <pre className="max-h-48 overflow-auto rounded bg-zinc-950 p-2 text-xs text-zinc-400">
+                    {panelUpdate.logTail.join("\n")}
+                  </pre>
+                )}
+                <p className="text-xs text-zinc-500">
+                  Full log: <span className="font-mono">{panelUpdate.logFile}</span>
+                </p>
+              </div>
             )}
             <Input
               label="Scheduled panel update cron (UTC)"

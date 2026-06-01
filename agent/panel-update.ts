@@ -166,10 +166,19 @@ export function getPanelUpdateStatus(): PanelUpdateState {
   const startedAt = persisted.startedAt ?? null;
   const elapsedSec = startedAt ? Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000) : null;
 
+  let error = persisted.error ?? null;
+  if (error?.includes("see ") && logTail.length > 0) {
+    const hint = logTail
+      .slice()
+      .reverse()
+      .find((line) => /error|fatal|failed|denied|not found|exited/i.test(line));
+    if (hint) error = hint.slice(0, 400);
+  }
+
   return {
     running,
     ok: running ? null : (persisted.ok ?? null),
-    error: persisted.error ?? null,
+    error,
     startedAt,
     finishedAt: persisted.finishedAt ?? null,
     commitBefore: persisted.commitBefore ?? null,
@@ -255,6 +264,7 @@ export function startPanelUpdate(trigger: "manual" | "scheduled") {
       cwd: agentConfig.panelRoot,
       env: {
         ...process.env,
+        NODE_ENV: "development",
         PANEL_UPDATE_STATE_FILE: statePath(),
         PANEL_UPDATE_LOG_FILE: logFile,
         PANEL_USER: agentConfig.runAsUser,
