@@ -30,10 +30,21 @@ on_err() {
     rm -rf "${INSTALL_DIR}/.next"
     mv "${NEXT_BACKUP_DIR}" "${INSTALL_DIR}/.next"
   fi
-  sudo systemctl start reforgerpanel 2>/dev/null || true
+  sudo systemctl start reforgerpanel 2>/dev/null || start_panel_if_built || true
   write_state false "Update failed — see ${LOG_FILE}" "${COMMIT_AFTER:-}"
 }
 trap on_err ERR
+
+start_panel_if_built() {
+  if [[ ! -f "${INSTALL_DIR}/.next/BUILD_ID" ]]; then
+    return 1
+  fi
+  if systemctl is-active --quiet reforgerpanel 2>/dev/null; then
+    return 0
+  fi
+  echo "Starting panel web UI…"
+  sudo systemctl start reforgerpanel
+}
 
 cd "${INSTALL_DIR}"
 COMMIT_BEFORE="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
@@ -55,6 +66,7 @@ echo "Commit after: ${COMMIT_AFTER}"
 if [[ "${COMMIT_BEFORE}" == "${COMMIT_AFTER}" ]]; then
   echo "Already up to date — skipping build"
   write_state true "" "${COMMIT_AFTER}"
+  start_panel_if_built || echo "WARN: panel not running and no build present — run npm run build"
   exit 0
 fi
 
