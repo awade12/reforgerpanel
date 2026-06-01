@@ -120,7 +120,10 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 if [[ "${branch}" == "HEAD" ]]; then
   branch="main"
 fi
-git pull --ff-only origin "${branch}"
+
+git fetch origin "${branch}"
+echo "Syncing to origin/${branch}…"
+git reset --hard "origin/${branch}"
 
 COMMIT_AFTER="$(git rev-parse --short HEAD)"
 echo "Commit after: ${COMMIT_AFTER}"

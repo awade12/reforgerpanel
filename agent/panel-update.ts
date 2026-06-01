@@ -61,6 +61,47 @@ function readLogTail(maxLines = 20): string[] {
   return [];
 }
 
+function readLogTailForDisplay(maxLines = 25): string[] {
+  const candidates = [logPath(), "/var/log/reforgerpanel-update.log"];
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const lines = fs.readFileSync(file, "utf8").split(/\r?\n/).filter(Boolean);
+      let lastStart = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes("Panel update started at")) lastStart = i;
+      }
+      const slice = lastStart >= 0 ? lines.slice(lastStart) : lines.slice(-maxLines);
+      return slice.slice(-maxLines);
+    } catch {
+      /* try next */
+    }
+  }
+  return [];
+}
+
+function reconcileStaleFailure(
+  persisted: ReturnType<typeof readPersistedState>,
+  behindCommits: number | null,
+  running: boolean,
+) {
+  if (running || persisted.ok !== false || behindCommits == null || behindCommits > 0) {
+    return persisted;
+  }
+  const next = {
+    ...persisted,
+    ok: true,
+    error: null,
+    finishedAt: persisted.finishedAt ?? new Date().toISOString(),
+  };
+  try {
+    fs.writeFileSync(statePath(), JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+  return next;
+}
+
 function inferPhase(logTail: string[]): string | null {
   const text = logTail.join("\n").toLowerCase();
   if (text.includes("restarting panel services")) return "Restarting services";
@@ -154,20 +195,21 @@ function readGitStatus(fetch = true) {
 
 export function getPanelUpdateStatus(): PanelUpdateState {
   const settings = getSettings();
-  const persisted = reconcileStaleUpdate(readPersistedState());
+  let persisted = reconcileStaleUpdate(readPersistedState());
   const git = readGitStatus(!persisted.running);
-  const logTail = readLogTail();
   const scriptRunning = updateScriptRunning();
   const running =
     panelUpdateRunning ||
     scriptRunning ||
     (persisted.running === true && !persisted.finishedAt && persisted.ok == null);
+  persisted = reconcileStaleFailure(persisted, git.behindCommits, running);
+  const logTail = readLogTailForDisplay();
 
   const startedAt = persisted.startedAt ?? null;
   const elapsedSec = startedAt ? Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000) : null;
 
   let error = persisted.error ?? null;
-  if (error?.includes("see ") && logTail.length > 0) {
+  if (error && logTail.length > 0 && persisted.ok === false) {
     const hint = logTail
       .slice()
       .reverse()

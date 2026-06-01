@@ -168,8 +168,10 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
-            {panelUpdate?.ok === true && !panelUpdate.running && panelUpdate.finishedAt && (
-              <p className="text-sm text-emerald-400">Last panel update succeeded</p>
+            {panelUpdate?.ok === true && !panelUpdate.running && (
+              <p className="text-sm text-emerald-400">
+                {panelUpdate.finishedAt ? "Last panel update succeeded" : "Panel is up to date with origin"}
+              </p>
             )}
             {panelUpdate?.ok === false && !panelUpdate.running && panelUpdate.error && (
               <div className="grid gap-2 rounded-lg border border-red-900/50 bg-red-950/20 p-3">
