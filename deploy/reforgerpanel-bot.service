@@ -1,14 +1,15 @@
 [Unit]
 Description=Reforger Panel Discord Bot
-After=network.target reforgerpanel-agent.service
+After=network-online.target reforgerpanel-agent.service
+Wants=reforgerpanel-agent.service
 
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/reforgerpanel
+WorkingDirectory=/opt/reforgerpanel
 EnvironmentFile=/etc/reforgerpanel/env
 ExecStart=/usr/bin/npm run bot
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]

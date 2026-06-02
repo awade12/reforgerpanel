@@ -173,6 +173,9 @@ echo "Restarting panel services…"
 write_state true "" "${COMMIT_AFTER}"
 
 sudo -n systemctl restart reforgerpanel-agent reforgerpanel
+if systemctl is-enabled caddy &>/dev/null; then
+  sudo -n systemctl restart caddy || true
+fi
 if systemctl is-enabled reforgerpanel-bot &>/dev/null; then
   sudo -n systemctl restart reforgerpanel-bot || true
 fi

@@ -17,6 +17,11 @@ for svc in caddy reforgerpanel-agent reforgerpanel; do
   else
     bad "${svc} is not running (systemctl status ${svc})"
   fi
+  if systemctl is-enabled --quiet "${svc}" 2>/dev/null; then
+    ok "${svc} enabled on boot"
+  else
+    bad "${svc} not enabled on boot — run: sudo bash scripts/ensure-panel-services.sh"
+  fi
 done
 
 if [[ -f "${ENV_FILE}" ]]; then

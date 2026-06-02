@@ -351,7 +351,7 @@ run_as_panel "npm run db:migrate"
 
 install_systemd_units
 
-systemctl enable reforgerpanel-agent reforgerpanel
+systemctl enable caddy reforgerpanel-agent reforgerpanel
 systemctl restart reforgerpanel-agent
 sleep 2
 systemctl restart reforgerpanel

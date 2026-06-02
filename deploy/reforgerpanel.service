@@ -1,19 +1,20 @@
 [Unit]
 Description=Reforger Panel Web UI
-After=network.target reforgerpanel-agent.service
+After=network-online.target postgresql.service reforgerpanel-agent.service
+Wants=network-online.target reforgerpanel-agent.service
+StartLimitIntervalSec=300
 
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/reforgerpanel
+WorkingDirectory=/opt/reforgerpanel
 EnvironmentFile=/etc/reforgerpanel/env
 Environment=NODE_ENV=production
-ExecStartPre=/bin/bash -c 'test -f .next/BUILD_ID || { echo "Missing production build — run: cd $PWD && npm run build"; exit 1; }'
+ExecStartPre=/bin/bash -c 'test -f .next/BUILD_ID || { echo "Missing production build — run: cd /opt/reforgerpanel && npm run build"; exit 1; }'
 ExecStart=/usr/bin/npm run start
-Restart=on-failure
+Restart=always
 RestartSec=5
-StartLimitIntervalSec=120
-StartLimitBurst=5
+StartLimitBurst=10
 
 [Install]
 WantedBy=multi-user.target

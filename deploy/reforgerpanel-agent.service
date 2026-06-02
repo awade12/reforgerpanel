@@ -1,15 +1,16 @@
 [Unit]
 Description=Reforger Panel Host Agent
-After=network.target
+After=network-online.target postgresql.service
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/reforgerpanel
+WorkingDirectory=/opt/reforgerpanel
 EnvironmentFile=/etc/reforgerpanel/env
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/npm run agent
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]
