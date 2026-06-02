@@ -16,6 +16,10 @@ type UpdateJob = {
   restartedInstances: string[];
 };
 
+type MaintenanceJob = UpdateJob & {
+  backedUpInstances: string[];
+};
+
 const initialSettings = defaultSettings() as Settings;
 
 type PanelUpdateStatus = {
@@ -45,8 +49,10 @@ export default function SettingsPage() {
   const [audit, setAudit] = useState<{ at: string; action: string; detail: string }[]>([]);
   const [message, setMessage] = useState("");
   const [updateJob, setUpdateJob] = useState<UpdateJob | null>(null);
+  const [maintenanceJob, setMaintenanceJob] = useState<MaintenanceJob | null>(null);
   const [panelUpdate, setPanelUpdate] = useState<PanelUpdateStatus | null>(null);
   const updatePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const maintenancePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const panelPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   async function loadPanelUpdate() {
@@ -65,11 +71,20 @@ export default function SettingsPage() {
     }
   }
 
+  async function loadMaintenanceJob() {
+    try {
+      setMaintenanceJob(await api<MaintenanceJob>("maintenance/restart"));
+    } catch {
+      setMaintenanceJob(null);
+    }
+  }
+
   async function load() {
     const loaded = await api<Partial<Settings>>("settings");
     setSettings(normalizePanelSettingsResponse(loaded));
     setAudit(await api("audit"));
     await loadUpdateJob();
+    await loadMaintenanceJob();
     await loadPanelUpdate();
   }
 
@@ -77,6 +92,7 @@ export default function SettingsPage() {
     void load();
     return () => {
       if (updatePollRef.current) clearInterval(updatePollRef.current);
+      if (maintenancePollRef.current) clearInterval(maintenancePollRef.current);
       if (panelPollRef.current) clearInterval(panelPollRef.current);
     };
   }, []);
@@ -128,6 +144,18 @@ export default function SettingsPage() {
       setMessage("Panel update started — page may reload when services restart");
     } catch (err) {
       setMessage(err instanceof ApiError ? err.message : "Failed to start panel update");
+    }
+  }
+
+  async function runMaintenanceNow() {
+    try {
+      await api("maintenance/restart/run", { method: "POST" });
+      if (maintenancePollRef.current) clearInterval(maintenancePollRef.current);
+      maintenancePollRef.current = setInterval(() => void loadMaintenanceJob(), 2000);
+      await loadMaintenanceJob();
+      setMessage("Maintenance restart started");
+    } catch (err) {
+      setMessage(err instanceof ApiError ? err.message : "Failed to start maintenance restart");
     }
   }
 
@@ -257,6 +285,86 @@ export default function SettingsPage() {
               <LinkButton href="/game" variant="ghost">
                 Game page
               </LinkButton>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Scheduled restarts">
+          <div className="grid gap-3">
+            <p className="text-sm text-zinc-400">
+              Restarts instances on a schedule. Can show the Discord maintenance banner, auto-backup first, and notify
+              your webhook. Cron is UTC.
+            </p>
+            {maintenanceJob?.nextScheduledAt && settings.enableScheduledRestarts && (
+              <p className="text-sm text-zinc-400">
+                Next run: {new Date(maintenanceJob.nextScheduledAt).toLocaleString()} (local)
+              </p>
+            )}
+            {maintenanceJob?.running && <p className="text-sm text-emerald-400">Maintenance restart running…</p>}
+            {maintenanceJob?.ok === true && !maintenanceJob.running && maintenanceJob.finishedAt && (
+              <p className="text-sm text-emerald-400">
+                Last run succeeded
+                {maintenanceJob.restartedInstances.length
+                  ? ` · restarted ${maintenanceJob.restartedInstances.join(", ")}`
+                  : ""}
+                {maintenanceJob.backedUpInstances?.length
+                  ? ` · backup ${maintenanceJob.backedUpInstances.join(", ")}`
+                  : ""}
+              </p>
+            )}
+            {maintenanceJob?.ok === false && !maintenanceJob.running && maintenanceJob.error && (
+              <p className="text-sm text-red-400">{maintenanceJob.error}</p>
+            )}
+            <Input
+              label="Restart cron (UTC)"
+              value={settings.scheduledRestartCron}
+              onChange={(v) => patch({ scheduledRestartCron: v })}
+            />
+            <label className="block space-y-2 text-sm">
+              <span className="font-mono text-[11px] uppercase text-muted-foreground">Restart scope</span>
+              <select
+                className="w-full border border-input bg-background px-3 py-2 text-sm"
+                value={settings.scheduledRestartScope}
+                onChange={(e) => patch({ scheduledRestartScope: e.target.value as "all" | "running" })}
+              >
+                <option value="running">Running instances only</option>
+                <option value="all">All instances</option>
+              </select>
+            </label>
+            <Input
+              label="Maintenance message (optional)"
+              value={settings.maintenanceRestartMessage}
+              onChange={(v) => patch({ maintenanceRestartMessage: v })}
+            />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.enableScheduledRestarts}
+                onChange={(e) => patch({ enableScheduledRestarts: e.target.checked })}
+              />
+              Enable scheduled restarts
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.enableMaintenanceBeforeRestart}
+                onChange={(e) => patch({ enableMaintenanceBeforeRestart: e.target.checked })}
+              />
+              Show Discord maintenance banner during restart
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.autoBackupBeforeRestart}
+                onChange={(e) => patch({ autoBackupBeforeRestart: e.target.checked })}
+              />
+              Auto-backup before restart
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => void save()}>Save schedule</Button>
+              <Button disabled={maintenanceJob?.running ?? false} variant="ghost" onClick={() => void runMaintenanceNow()}>
+                Run restart now
+              </Button>
             </div>
           </div>
         </Card>

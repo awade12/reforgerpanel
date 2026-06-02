@@ -22,8 +22,17 @@ export function agentRoutePolicy(pathname: string, method: string): AgentRoutePo
   if (pathname.startsWith("/host/panel/")) {
     return { permission: "settings", write: method !== "GET" };
   }
+  if (pathname.startsWith("/metrics")) {
+    return { permission: "metrics", write: false };
+  }
   if (pathname.startsWith("/game/")) {
     return { permission: "game", write: method !== "GET" };
+  }
+  if (pathname.startsWith("/maintenance/")) {
+    return { permission: "settings", write: method !== "GET" };
+  }
+  if (pathname.startsWith("/templates")) {
+    return { permission: "instances", write: method !== "GET" };
   }
   if (pathname.startsWith("/missions")) {
     return { permission: "missions", write: method !== "GET" };
@@ -63,11 +72,36 @@ export function agentRoutePolicy(pathname: string, method: string): AgentRoutePo
     if (sub === "/alerts/test" || sub === "/alerts/sync-status") {
       return { permission: "instances", write: true };
     }
+    if (sub === "/clone" && method === "POST") {
+      return { permission: "instances", write: true, instanceControl: true };
+    }
+    if (sub === "/backups" && method === "POST") {
+      return { permission: "instances", write: true };
+    }
+    const backupMatch = sub.match(/^\/backups\/([^/]+)(\/restore)?$/);
+    if (backupMatch?.[2] === "/restore" && method === "POST") {
+      return { permission: "instances", write: true, instanceControl: true };
+    }
+    if (backupMatch && method === "DELETE") {
+      return { permission: "instances", write: true };
+    }
+    if (sub === "/rotation/run" && method === "POST") {
+      return { permission: "instances", write: true, instanceControl: true };
+    }
+    if (sub === "/rotation" && method === "PATCH") {
+      return { permission: "instances", write: true };
+    }
+    if (sub === "/template" && method === "POST") {
+      return { permission: "instances", write: true };
+    }
     if (sub === "/merge-mission" && method === "POST") {
       return { permission: "missions", write: true };
     }
     if (sub === "/bot-status" && method === "PATCH") {
       return { permission: "discord", write: true };
+    }
+    if (sub === "/metrics" || sub.startsWith("/metrics/")) {
+      return { permission: "metrics", write: false };
     }
     return { permission: "instances", write: method !== "GET" };
   }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ModEntry } from "@/lib/shared/config-schema";
+import type { InstanceTemplateMeta } from "@/lib/shared/types";
 import { Shell, Card, Button, Input, TextArea, api, ApiError, LinkButton } from "@/components/Shell";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,7 @@ interface Mission {
   requiredMods: ModEntry[];
 }
 
-type ScenarioSource = "official" | "library" | "custom";
+type ScenarioSource = "official" | "library" | "custom" | "template";
 
 const selectClass =
   "w-full border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-foreground/30";
@@ -42,6 +43,8 @@ export default function NewInstancePage() {
   const [crossPlatform, setCrossPlatform] = useState(false);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [templates, setTemplates] = useState<InstanceTemplateMeta[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -57,6 +60,7 @@ export default function NewInstancePage() {
 
   useEffect(() => {
     void api<Mission[]>("missions").then(setMissions).catch(() => undefined);
+    void api<InstanceTemplateMeta[]>("templates").then(setTemplates).catch(() => undefined);
     void api<{ ips: string[]; usedPorts?: number[]; suggestedPort?: number }>("host")
       .then((h) => {
         setPublicAddress(h.ips[0] ?? "");
@@ -72,6 +76,12 @@ export default function NewInstancePage() {
       setSelectedMission(missions[0].slug);
     }
   }, [missions, scenarioSource, selectedMission]);
+
+  useEffect(() => {
+    if (scenarioSource === "template" && templates.length && !selectedTemplate) {
+      setSelectedTemplate(templates[0].slug);
+    }
+  }, [templates, scenarioSource, selectedTemplate]);
 
   const selectedLibraryMission = useMemo(
     () => missions.find((m) => m.slug === selectedMission) ?? null,
@@ -101,11 +111,28 @@ export default function NewInstancePage() {
   async function create() {
     setError("");
     try {
-      const { scenarioId, mods } = resolveCreatePayload();
       const port = Number(publicPort);
       if (!autoPort && (!Number.isFinite(port) || port < 1 || port > 65535)) {
         throw new Error("Enter a valid UDP port between 1 and 65535");
       }
+
+      if (scenarioSource === "template") {
+        if (!selectedTemplate) throw new Error("Select a template");
+        const created = await api<{ id: string }>("instances", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateSlug: selectedTemplate,
+            name,
+            ...(autoPort ? {} : { publicPort: port }),
+            publicAddress,
+          }),
+        });
+        router.push(`/instances/${created.id}`);
+        return;
+      }
+
+      const { scenarioId, mods } = resolveCreatePayload();
       const created = await api<{ id: string }>("instances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -178,6 +205,7 @@ export default function NewInstancePage() {
                 [
                   ["official", "Official"],
                   ["library", "From library"],
+                  ["template", "From template"],
                   ["custom", "Custom ID"],
                 ] as const
               ).map(([value, label]) => (
@@ -250,6 +278,33 @@ export default function NewInstancePage() {
                       add one to the library
                     </Link>
                     .
+                  </p>
+                )}
+              </div>
+            )}
+
+            {scenarioSource === "template" && (
+              <div className="space-y-2">
+                {templates.length > 0 ? (
+                  <>
+                    <select
+                      className={selectClass}
+                      value={selectedTemplate}
+                      onChange={(e) => setSelectedTemplate(e.target.value)}
+                    >
+                      {templates.map((template) => (
+                        <option key={template.slug} value={template.slug}>
+                          {template.title} ({template.branch})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-muted-foreground">
+                      Templates save config and alert defaults — download mods after create if needed.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No templates yet. Save one from an instance under Admin → Clone.
                   </p>
                 )}
               </div>

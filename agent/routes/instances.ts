@@ -1,6 +1,7 @@
 import { updateInstance } from "../db";
 import {
   createInstance,
+  cloneInstance,
   getInstanceDetailed,
   getInstanceStatus,
   listInstancesDetailed,
@@ -23,6 +24,18 @@ import { checkConfiguredMods, missingRequiredMods } from "../mods";
 import { downloadWorkshopMods } from "../workshop";
 import { installOrUpdate } from "../steamcmd";
 import { findLatestLogFile, listLogFiles, parseFpsFromLogs, tailLogFile, tailLogLines } from "../logs";
+import {
+  createInstanceBackup,
+  deleteInstanceBackup,
+  listInstanceBackups,
+  restoreInstanceBackup,
+} from "../backup";
+import {
+  buildRotationStatus,
+  runMissionRotation,
+  updateInstanceRotation,
+} from "../mission-rotation";
+import { createInstanceFromTemplate, saveInstanceTemplate } from "../templates";
 import {
   mergeBattleyePassword,
   redactBattleyeForPanel,
@@ -47,6 +60,15 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
   
       if (pathname === "/instances" && method === "POST") {
         const body = await ctx.readBody();
+        if (body.templateSlug) {
+          const created = createInstanceFromTemplate(String(body.templateSlug), {
+            name: String(body.name ?? "Reforger Server").trim() || "Reforger Server",
+            publicPort: body.publicPort != null && body.publicPort !== "" ? Number(body.publicPort) : undefined,
+            publicAddress: body.publicAddress ? String(body.publicAddress) : undefined,
+          });
+          sendJson(ctx.res, 201, isPanelClient(ctx.req) ? redactInstanceForPanel(created) : created);
+          return true;
+        }
         const created = createInstance({
           name: String(body.name ?? "Reforger Server").trim() || "Reforger Server",
           branch: parseBranch(body.branch),
@@ -312,6 +334,79 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
           return true;
         }
   
+    if (sub === "/clone" && method === "POST") {
+      const body = await ctx.readBody();
+      const cloned = cloneInstance(id, {
+        name: String(body.name ?? "").trim() || "Cloned server",
+        publicPort: body.publicPort != null && body.publicPort !== "" ? Number(body.publicPort) : undefined,
+        includeProfile: body.includeProfile !== false,
+      });
+      sendJson(ctx.res, 201, isPanelClient(ctx.req) ? redactInstanceForPanel(cloned) : cloned);
+      return true;
+    }
+
+    if (sub === "/backups" && method === "GET") {
+      sendJson(ctx.res, 200, { backups: listInstanceBackups(id) });
+      return true;
+    }
+
+    if (sub === "/backups" && method === "POST") {
+      const body = await ctx.readBody().catch(() => ({}));
+      const backup = createInstanceBackup(id, {
+        label: body.label ? String(body.label) : undefined,
+        includeLogs: body.includeLogs === true,
+      });
+      sendJson(ctx.res, 201, backup);
+      return true;
+    }
+
+    const backupMatch = sub.match(/^\/backups\/([^/]+)(\/restore)?$/);
+    if (backupMatch) {
+      const backupId = backupMatch[1];
+      if (backupMatch[2] === "/restore" && method === "POST") {
+        const backups = await restoreInstanceBackup(id, backupId);
+        sendJson(ctx.res, 200, { ok: true, backups });
+        return true;
+      }
+      if (method === "DELETE") {
+        deleteInstanceBackup(id, backupId);
+        sendJson(ctx.res, 200, { ok: true });
+        return true;
+      }
+    }
+
+    if (sub === "/template" && method === "POST") {
+      const body = await ctx.readBody();
+      const meta = saveInstanceTemplate(id, {
+        title: String(body.title ?? "").trim(),
+        description: body.description ? String(body.description) : undefined,
+        slug: body.slug ? String(body.slug) : undefined,
+      });
+      sendJson(ctx.res, 201, meta);
+      return true;
+    }
+
+    if (sub === "/rotation" && method === "GET") {
+      sendJson(ctx.res, 200, buildRotationStatus(id));
+      return true;
+    }
+
+    if (sub === "/rotation" && method === "PATCH") {
+      const body = await ctx.readBody();
+      sendJson(ctx.res, 200, updateInstanceRotation(id, body as never));
+      return true;
+    }
+
+    if (sub === "/rotation/run" && method === "POST") {
+      const body = await ctx.readBody().catch(() => ({}));
+      const status = await runMissionRotation(id, {
+        trigger: "manual",
+        force: body.force === true,
+      });
+      sendJson(ctx.res, 200, status);
+      return true;
+    }
+
     if (sub === "/alerts/test" && method === "POST") {
       const item = getInstanceDetailed(id);
       if (!item) {

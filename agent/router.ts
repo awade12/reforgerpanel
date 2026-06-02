@@ -6,7 +6,9 @@ import { isPanelClient } from "./panel-request";
 import { readBody, sendJson, handleRouteError, type RequestContext } from "./http";
 import { handleHostRoutes } from "./routes/host";
 import { handleInstanceRoutes } from "./routes/instances";
+import { handleMetricsRoutes } from "./routes/metrics";
 import { handleMissionRoutes } from "./routes/missions";
+import { handleTemplateRoutes } from "./routes/templates";
 import { handleSettingsRoutes } from "./routes/settings";
 import { handleBotRoutes } from "./routes/bot";
 import { handleAuthSessionRoutes } from "./routes/auth";
@@ -14,8 +16,10 @@ import { handleAuthSessionRoutes } from "./routes/auth";
 const routeHandlers = [
   handleAuthSessionRoutes,
   handleHostRoutes,
+  handleMetricsRoutes,
   handleInstanceRoutes,
   handleMissionRoutes,
+  handleTemplateRoutes,
   handleSettingsRoutes,
   handleBotRoutes,
 ];

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Pool, type PoolClient } from "pg";
 import type { AuditEntry, InstanceRecord, MissionMeta } from "../../lib/shared/types";
+import { defaultInstanceRotation } from "../../lib/shared/rotation";
 import {
   defaultBotRuntime,
   defaultSettings,
@@ -86,6 +87,10 @@ function rowToInstance(row: Record<string, unknown>): InstanceRecord {
     discordBotSeedPingAt: row.discord_bot_seed_ping_at
       ? new Date(String(row.discord_bot_seed_ping_at)).toISOString()
       : null,
+    rotation:
+      typeof row.rotation === "string"
+        ? JSON.parse(row.rotation)
+        : ((row.rotation as InstanceRecord["rotation"]) ?? defaultInstanceRotation()),
   });
 }
 
@@ -95,9 +100,10 @@ INSERT INTO instances (
   addon_temp_dir, status, last_started_at, restart_count, config_path, profile_path, battleye_path,
   alerts, discord_status_message_id, discord_bot_status_message_id, last_low_fps_alert_at,
   last_low_fps_recovery_at, last_memory_alert_at, last_status_embed_at, last_known_player_count,
-  last_join_leave_scan_at, discord_bot_crash_ping_at, discord_bot_empty_since, discord_bot_seed_ping_at
+  last_join_leave_scan_at, discord_bot_crash_ping_at, discord_bot_empty_since, discord_bot_seed_ping_at,
+  rotation
 ) VALUES (
-  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name, slug = EXCLUDED.slug, branch = EXCLUDED.branch, updated_at = EXCLUDED.updated_at,
@@ -111,7 +117,7 @@ ON CONFLICT (id) DO UPDATE SET
   last_memory_alert_at = EXCLUDED.last_memory_alert_at, last_status_embed_at = EXCLUDED.last_status_embed_at,
   last_known_player_count = EXCLUDED.last_known_player_count, last_join_leave_scan_at = EXCLUDED.last_join_leave_scan_at,
   discord_bot_crash_ping_at = EXCLUDED.discord_bot_crash_ping_at, discord_bot_empty_since = EXCLUDED.discord_bot_empty_since,
-  discord_bot_seed_ping_at = EXCLUDED.discord_bot_seed_ping_at
+  discord_bot_seed_ping_at = EXCLUDED.discord_bot_seed_ping_at, rotation = EXCLUDED.rotation
 `;
 
 function instanceParams(instance: InstanceRecord) {
@@ -145,6 +151,7 @@ function instanceParams(instance: InstanceRecord) {
     instance.discordBotCrashPingAt,
     instance.discordBotEmptySince,
     instance.discordBotSeedPingAt,
+    JSON.stringify(instance.rotation ?? defaultInstanceRotation()),
   ];
 }
 

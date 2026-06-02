@@ -7,7 +7,10 @@ import { getInstanceDetailed } from "./instances";
 import { loadMissionMetaFromDisk } from "./missions";
 import { ensureScenarioCache } from "./scenarios";
 import { findLatestLogFile, parseFpsFromLogs, startMonitorLoop, tailLogFile } from "./logs";
+import { startMetricsCollector } from "./metrics-collector";
 import { startScheduledUpdateLoop } from "./monitor";
+import { startScheduledRestartLoop } from "./maintenance";
+import { startMissionRotationLoop } from "./mission-rotation";
 import { clearPanelUpdateRunningFlag, startPanelUpdateLoop } from "./panel-update";
 import { handleRequest } from "./router";
 import { agentTokenOk } from "./panel-auth";
@@ -83,7 +86,10 @@ function startAgentServer() {
   });
 
   startMonitorLoop();
+  startMetricsCollector();
   startScheduledUpdateLoop();
+  startScheduledRestartLoop();
+  startMissionRotationLoop();
   startPanelUpdateLoop();
   clearPanelUpdateRunningFlag();
 

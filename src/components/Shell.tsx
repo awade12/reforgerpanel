@@ -456,7 +456,7 @@ export function PageHeader({
   label,
 }: {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
   label?: string;
 }) {
@@ -468,7 +468,9 @@ export function PageHeader({
           <h2 className={cn("text-[1.75rem] font-semibold tracking-[-0.03em] text-foreground", label && "mt-2")}>
             {title}
           </h2>
-          {description && <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>}
+          {description && (
+            <div className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{description}</div>
+          )}
         </div>
         {actions}
       </div>

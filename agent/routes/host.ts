@@ -6,6 +6,7 @@ import { firewallAvailable, ufwStatus } from "../firewall";
 import { discoverScenariosAsync, ensureScenarioCache, getScenarios } from "../scenarios";
 import { parseBranch, sendJson, type RequestContext } from "../http";
 import { getGameUpdateJob, isGameUpdateRunning, startGameUpdateJob } from "../monitor";
+import { getMaintenanceRestartJob, startMaintenanceRestartJob } from "../maintenance";
 import { getPanelUpdateStatus, startPanelUpdate } from "../panel-update";
 
 export async function handleHostRoutes(ctx: RequestContext) {
@@ -59,6 +60,16 @@ export async function handleHostRoutes(ctx: RequestContext) {
   if (pathname === "/game/update/run" && method === "POST") {
     const job = startGameUpdateJob("manual");
     sendJson(res, 202, job);
+    return true;
+  }
+
+  if (pathname === "/maintenance/restart" && method === "GET") {
+    sendJson(res, 200, getMaintenanceRestartJob());
+    return true;
+  }
+
+  if (pathname === "/maintenance/restart/run" && method === "POST") {
+    sendJson(res, 202, startMaintenanceRestartJob("manual"));
     return true;
   }
 

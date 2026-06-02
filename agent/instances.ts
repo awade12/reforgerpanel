@@ -11,6 +11,7 @@ import {
   validatePlatformCombo,
 } from "../lib/shared/config-schema";
 import { HttpError } from "../lib/shared/http-error";
+import { getNetworkRates } from "./network-stats";
 import type { Branch, HostInfo, InstanceRecord, InstanceWithConfig, RuntimeMeta } from "../lib/shared/types";
 import { buildLaunchShell } from "../lib/shared/startup-params";
 import { agentConfig } from "./config";
@@ -41,6 +42,7 @@ import {
 
 const REFORGER_CTL = "/usr/local/bin/reforger-ctl";
 import { mergeInstanceAlerts } from "../lib/shared/alerts";
+import { defaultInstanceRotation } from "../lib/shared/rotation";
 import { mergeInstanceAlertSecrets, mergeServerConfigSecrets } from "../lib/shared/secrets";
 import type { ServerConfig } from "../lib/shared/config-schema";
 import { handleAlertsSettingsChange, notifyDiscord, syncInstanceStatusEmbed, deleteInstanceStatusEmbed } from "./alerts";
@@ -144,6 +146,8 @@ export function getHostInfo(): HostInfo {
     }
   }
 
+  const network = getNetworkRates();
+
   return {
     ips,
     publicIpHint: ips[0] ?? "",
@@ -161,6 +165,9 @@ export function getHostInfo(): HostInfo {
     instancesRunning,
     instancesTotal: instanceList.length,
     instanceRamMb,
+    networkIngressMbps: network?.ingressMbps ?? null,
+    networkEgressMbps: network?.egressMbps ?? null,
+    networkInterface: network?.interface ?? null,
   };
 }
 
@@ -355,6 +362,7 @@ export function createInstance(input: CreateInstanceInput) {
     discordBotCrashPingAt: null,
     discordBotEmptySince: null,
     discordBotSeedPingAt: null,
+    rotation: defaultInstanceRotation(),
   };
 
   insertInstance(record);
@@ -530,4 +538,48 @@ export function getInstanceStatus(id: string) {
     active: isActive(instance),
     runtime: getRuntimeMeta(instance),
   };
+}
+
+export function cloneInstance(
+  id: string,
+  input: { name: string; publicPort?: number; includeProfile?: boolean },
+) {
+  const source = getInstance(id);
+  if (!source) throw new HttpError(404, "Instance not found");
+  if (instanceOps.has(id)) throw new HttpError(409, "Source instance is busy");
+
+  const config = readInstanceConfig(source);
+  const name = input.name.trim() || `${source.name} copy`;
+  const created = createInstance({
+    name,
+    branch: source.branch,
+    scenarioId: config.game.scenarioId,
+    publicPort: input.publicPort,
+    publicAddress: config.publicAddress,
+    maxPlayers: config.game.maxPlayers,
+    crossPlatform: Boolean(config.game.crossPlatform),
+    mods: config.game.mods,
+  });
+
+  const next = getInstance(created!.id)!;
+  writeInstanceConfig(next, {
+    ...config,
+    name,
+    publicPort: created!.config.publicPort,
+  });
+
+  if (input.includeProfile !== false && fs.existsSync(source.profilePath)) {
+    fs.cpSync(source.profilePath, next.profilePath, { recursive: true, force: true });
+  }
+
+  updateInstanceSettings(next.id, {
+    autoRestart: source.autoRestart,
+    maxFps: source.maxFps,
+    logStatsMs: source.logStatsMs,
+    logLevel: source.logLevel,
+    alerts: mergeInstanceAlerts(source.alerts),
+  });
+
+  addAudit("instance.clone", `${source.slug} → ${next.slug}`);
+  return getInstanceDetailed(next.id)!;
 }

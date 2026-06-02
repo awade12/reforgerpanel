@@ -13,6 +13,8 @@ export type MetricsSample = {
   load5: number;
   load15: number;
   diskFreeGb: number;
+  ingressMbps: number;
+  egressMbps: number;
 };
 
 export type InstanceMetrics = {
@@ -69,6 +71,14 @@ export function runningCount(host: HostInfo, instances: InstanceMetrics[]) {
   return { running, total: instances.length };
 }
 
+export function formatBandwidth(mbps: number | null | undefined) {
+  if (mbps == null || !Number.isFinite(mbps)) return "—";
+  if (mbps >= 1000) return `${(mbps / 1000).toFixed(2)} Gbps`;
+  if (mbps >= 100) return `${Math.round(mbps)} Mbps`;
+  if (mbps >= 10) return `${mbps.toFixed(1)} Mbps`;
+  return `${mbps.toFixed(2)} Mbps`;
+}
+
 export function sampleFromHost(host: HostInfo, instances: InstanceMetrics[]): MetricsSample {
   const time = new Date();
   return {
@@ -81,6 +91,8 @@ export function sampleFromHost(host: HostInfo, instances: InstanceMetrics[]): Me
     load5: host.loadAvg?.[1] ?? 0,
     load15: host.loadAvg?.[2] ?? 0,
     diskFreeGb: host.diskFreeGb,
+    ingressMbps: host.networkIngressMbps ?? 0,
+    egressMbps: host.networkEgressMbps ?? 0,
   };
 }
 

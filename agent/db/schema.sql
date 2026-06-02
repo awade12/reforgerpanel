@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS instances (
   last_join_leave_scan_at TIMESTAMPTZ,
   discord_bot_crash_ping_at TIMESTAMPTZ,
   discord_bot_empty_since TIMESTAMPTZ,
-  discord_bot_seed_ping_at TIMESTAMPTZ
+  discord_bot_seed_ping_at TIMESTAMPTZ,
+  rotation JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE IF NOT EXISTS missions (
@@ -96,3 +97,65 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 );
 
 CREATE INDEX IF NOT EXISTS login_attempts_email_idx ON login_attempts (email, attempted_at DESC);
+
+CREATE TABLE IF NOT EXISTS host_metric_samples (
+  id BIGSERIAL PRIMARY KEY,
+  sampled_at TIMESTAMPTZ NOT NULL,
+  cpu_percent REAL,
+  memory_percent REAL,
+  memory_used_mb INTEGER,
+  memory_total_mb INTEGER,
+  load1 REAL,
+  load5 REAL,
+  load15 REAL,
+  disk_free_gb REAL,
+  disk_used_percent REAL,
+  players_online INTEGER,
+  instances_running INTEGER,
+  instances_total INTEGER,
+  instance_ram_mb INTEGER,
+  ingress_mbps REAL,
+  egress_mbps REAL,
+  network_iface TEXT
+);
+
+CREATE INDEX IF NOT EXISTS host_metric_samples_time_idx ON host_metric_samples (sampled_at DESC);
+
+CREATE TABLE IF NOT EXISTS instance_metric_samples (
+  id BIGSERIAL PRIMARY KEY,
+  instance_id TEXT NOT NULL REFERENCES instances(id) ON DELETE CASCADE,
+  sampled_at TIMESTAMPTZ NOT NULL,
+  status TEXT NOT NULL,
+  fps REAL,
+  memory_mb INTEGER,
+  cpu_percent REAL,
+  player_count INTEGER,
+  max_players INTEGER,
+  a2s_listed BOOLEAN,
+  a2s_latency_ms INTEGER,
+  disk_profile_mb INTEGER,
+  systemd_active BOOLEAN,
+  uptime_sec INTEGER,
+  host_load1 REAL,
+  host_memory_percent REAL
+);
+
+CREATE INDEX IF NOT EXISTS instance_metric_samples_instance_time_idx
+  ON instance_metric_samples (instance_id, sampled_at DESC);
+
+CREATE TABLE IF NOT EXISTS instance_metric_events (
+  id BIGSERIAL PRIMARY KEY,
+  instance_id TEXT NOT NULL REFERENCES instances(id) ON DELETE CASCADE,
+  at TIMESTAMPTZ NOT NULL,
+  kind TEXT NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS instance_metric_events_instance_time_idx
+  ON instance_metric_events (instance_id, at DESC);
+
+ALTER TABLE host_metric_samples ADD COLUMN IF NOT EXISTS ingress_mbps REAL;
+ALTER TABLE host_metric_samples ADD COLUMN IF NOT EXISTS egress_mbps REAL;
+ALTER TABLE host_metric_samples ADD COLUMN IF NOT EXISTS network_iface TEXT;
+
+ALTER TABLE instances ADD COLUMN IF NOT EXISTS rotation JSONB NOT NULL DEFAULT '{}'::jsonb;

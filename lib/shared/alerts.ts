@@ -53,6 +53,12 @@ export function defaultSettings() {
     resendApiKey: "",
     resendFromEmail: "",
     resendEnabled: false,
+    enableScheduledRestarts: false,
+    scheduledRestartCron: "0 5 * * 0",
+    scheduledRestartScope: "running",
+    enableMaintenanceBeforeRestart: true,
+    maintenanceRestartMessage: "",
+    autoBackupBeforeRestart: true,
   };
 }
 
@@ -91,5 +97,11 @@ export function normalizePanelSettings(partial?: Partial<SettingsRecord>): Setti
     resendApiKey: merged.resendApiKey ?? "",
     resendFromEmail: merged.resendFromEmail ?? "",
     resendEnabled: Boolean(merged.resendEnabled),
+    enableScheduledRestarts: Boolean(merged.enableScheduledRestarts),
+    scheduledRestartCron: merged.scheduledRestartCron ?? "0 5 * * 0",
+    scheduledRestartScope: merged.scheduledRestartScope === "all" ? "all" : "running",
+    enableMaintenanceBeforeRestart: Boolean(merged.enableMaintenanceBeforeRestart),
+    maintenanceRestartMessage: merged.maintenanceRestartMessage ?? "",
+    autoBackupBeforeRestart: Boolean(merged.autoBackupBeforeRestart),
   };
 }

@@ -2,7 +2,10 @@
 
 import { InstanceAdvancedPanel } from "@/components/instance-advanced-panel";
 import { InstanceAlertsPanel } from "@/components/instance-alerts-panel";
+import { InstanceBackupPanel } from "@/components/instance-backup-panel";
 import { InstanceBattleyePanel } from "@/components/instance-battleye-panel";
+import { InstanceClonePanel } from "@/components/instance-clone-panel";
+import { InstanceRotationPanel } from "@/components/instance-rotation-panel";
 import { InstanceOpsPanel } from "@/components/instance-ops-panel";
 import { useInstanceWorkspace } from "@/components/instance-workspace";
 
@@ -32,6 +35,17 @@ export default function InstanceAdminPage() {
         }}
         onError={fail}
       />
+
+      <InstanceBackupPanel id={id} onMessage={notify} onError={fail} />
+
+      <InstanceClonePanel
+        id={id}
+        defaultName={instance.name}
+        onMessage={notify}
+        onError={fail}
+      />
+
+      <InstanceRotationPanel id={id} onMessage={notify} onError={fail} />
 
       <InstanceAlertsPanel
         id={id}

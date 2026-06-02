@@ -1,5 +1,6 @@
 import type { AuditEntry, BotRuntimeRecord, InstanceRecord, MissionMeta, SettingsRecord } from "../../lib/shared/types";
 import { mergeInstanceAlerts, mergeSettings, normalizePanelSettings } from "../../lib/shared/alerts";
+import { defaultInstanceRotation, normalizeInstanceRotation } from "../../lib/shared/rotation";
 
 export interface PanelStore {
   instances: InstanceRecord[];
@@ -50,6 +51,7 @@ export function normalizeInstance(instance: InstanceRecord): InstanceRecord {
     discordBotCrashPingAt: instance.discordBotCrashPingAt ?? null,
     discordBotEmptySince: instance.discordBotEmptySince ?? null,
     discordBotSeedPingAt: instance.discordBotSeedPingAt ?? null,
+    rotation: normalizeInstanceRotation(instance.rotation),
   };
 }
 

@@ -2,6 +2,31 @@ import type { ModEntry, ServerConfig } from "./config-schema";
 
 export type Branch = "stable" | "experimental";
 
+export type InstanceRotationConfig = {
+  enabled: boolean;
+  missionSlugs: string[];
+  nextIndex: number;
+  cron: string;
+  onlyIfEmpty: boolean;
+  replaceMods: boolean;
+  downloadMods: boolean;
+  enableMaintenanceBanner: boolean;
+  autoBackup: boolean;
+  maintenanceMessage: string;
+  lastRotatedAt: string | null;
+  lastMissionSlug: string | null;
+  lastRunKey: string | null;
+};
+
+export type InstanceRotationStatus = {
+  rotation: InstanceRotationConfig;
+  currentMissionTitle: string | null;
+  currentMissionSlug: string | null;
+  nextMissionTitle: string | null;
+  nextMissionSlug: string | null;
+  nextScheduledAt: string | null;
+};
+
 export interface InstanceRecord {
   id: string;
   name: string;
@@ -32,6 +57,7 @@ export interface InstanceRecord {
   discordBotCrashPingAt: string | null;
   discordBotEmptySince: string | null;
   discordBotSeedPingAt: string | null;
+  rotation: InstanceRotationConfig;
 }
 
 export type InstanceStatus = "stopped" | "starting" | "running" | "stopping" | "crashed" | "updating";
@@ -84,6 +110,100 @@ export interface HostInfo {
   instancesRunning?: number;
   instancesTotal?: number;
   instanceRamMb?: number;
+  networkIngressMbps?: number | null;
+  networkEgressMbps?: number | null;
+  networkInterface?: string | null;
+}
+
+export type MetricsTimeRange = "1h" | "6h" | "24h" | "7d" | "30d";
+export type MetricsResolution = "raw" | "1m" | "5m" | "1h";
+
+export interface HostMetricSample {
+  at: string;
+  cpuPercent: number | null;
+  memoryPercent: number | null;
+  memoryUsedMb: number | null;
+  memoryTotalMb: number | null;
+  load1: number | null;
+  load5: number | null;
+  load15: number | null;
+  diskFreeGb: number | null;
+  diskUsedPercent: number | null;
+  playersOnline: number | null;
+  instancesRunning: number | null;
+  instancesTotal: number | null;
+  instanceRamMb: number | null;
+  ingressMbps: number | null;
+  egressMbps: number | null;
+  networkIface: string | null;
+}
+
+export interface InstanceMetricSample {
+  at: string;
+  instanceId: string;
+  status: string;
+  fps: number | null;
+  memoryMb: number | null;
+  cpuPercent: number | null;
+  playerCount: number | null;
+  maxPlayers: number | null;
+  a2sListed: boolean | null;
+  a2sLatencyMs: number | null;
+  diskProfileMb: number | null;
+  systemdActive: boolean | null;
+  uptimeSec: number | null;
+  hostLoad1: number | null;
+  hostMemoryPercent: number | null;
+}
+
+export interface InstanceMetricEvent {
+  id: number;
+  at: string;
+  instanceId: string;
+  kind: string;
+  payload: Record<string, unknown>;
+}
+
+export interface MetricsSummary {
+  enabled: boolean;
+  retentionDays: number;
+  hostSamples: number;
+  instanceSamples: number;
+  oldestSample: string | null;
+}
+
+export interface InstanceMetricsStats {
+  avgFps: number | null;
+  minFps: number | null;
+  maxFps: number | null;
+  avgMemoryMb: number | null;
+  peakPlayers: number | null;
+  avgPlayers: number | null;
+  sampleCount: number;
+}
+
+export interface InstanceMetricsSparkPoint {
+  at: string;
+  fps: number | null;
+  memoryMb: number | null;
+  players: number | null;
+}
+
+export interface InstanceMetricsOverviewItem {
+  instanceId: string;
+  latest: InstanceMetricSample | null;
+  stats: InstanceMetricsStats;
+  sparkline: InstanceMetricsSparkPoint[];
+}
+
+export interface HostMetricsStats {
+  avgCpu: number | null;
+  peakCpu: number | null;
+  avgMemory: number | null;
+  peakMemory: number | null;
+  peakPlayers: number | null;
+  peakGameRam: number | null;
+  avgLoad1: number | null;
 }
 
 export type HostHealthLevel = "healthy" | "attention" | "critical";
@@ -193,6 +313,45 @@ export interface SettingsRecord {
   resendApiKey: string;
   resendFromEmail: string;
   resendEnabled: boolean;
+  enableScheduledRestarts: boolean;
+  scheduledRestartCron: string;
+  scheduledRestartScope: "all" | "running";
+  enableMaintenanceBeforeRestart: boolean;
+  maintenanceRestartMessage: string;
+  autoBackupBeforeRestart: boolean;
+}
+
+export interface InstanceBackupMeta {
+  id: string;
+  instanceId: string;
+  createdAt: string;
+  sizeBytes: number;
+  sizeLabel: string;
+  label: string;
+  includesLogs: boolean;
+}
+
+export interface InstanceTemplateMeta {
+  slug: string;
+  title: string;
+  description: string;
+  branch: Branch;
+  createdAt: string;
+  sourceInstanceName?: string;
+}
+
+export type MaintenanceRestartTrigger = "scheduled" | "manual";
+
+export interface MaintenanceRestartJobState {
+  running: boolean;
+  trigger: MaintenanceRestartTrigger | null;
+  ok: boolean | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  restartedInstances: string[];
+  backedUpInstances: string[];
+  nextScheduledAt: string | null;
 }
 
 export interface BotRuntimeRecord {
