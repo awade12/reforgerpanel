@@ -1,6 +1,7 @@
 import { OFFICIAL_SCENARIOS } from "./constants";
 import type { InstanceRecord, RuntimeMeta } from "./types";
 import type { ServerConfig } from "./config-schema";
+import { PANEL_NAME } from "./panel-brand";
 
 export function statusColor(status: string) {
   if (status === "running") return 0x5c9fd4;
@@ -72,7 +73,7 @@ export function buildDiscordStatusEmbed(input: {
     return {
       color: statusColor(instance.status),
       image: { url: imageUrl },
-      footer: { text: `${instance.slug} · ${instance.branch} · Reforger Panel` },
+      footer: { text: `${instance.slug} · ${instance.branch} · ${PANEL_NAME}` },
       timestamp: now,
     };
   }
@@ -89,7 +90,7 @@ export function buildDiscordStatusEmbed(input: {
   const crashed = instance.status === "crashed";
 
   return {
-    author: { name: crashed ? "Reforger Panel · Server crashed" : "Reforger Panel · Live status" },
+    author: { name: crashed ? `${PANEL_NAME} · Server crashed` : `${PANEL_NAME} · Live status` },
     title: crashed ? `⚠ ${instance.name} — Crashed` : instance.name,
     description: crashed
       ? "The server process stopped unexpectedly. Staff have been notified."

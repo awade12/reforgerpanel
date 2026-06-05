@@ -52,7 +52,7 @@ async function fetchRawWorkshopAsset(assetId: string): Promise<RawWorkshopAsset>
 
   const res = await fetch(workshopPageUrl(assetId), {
     headers: {
-      "User-Agent": "ReforgerPanel/1.0 (+workshop lookup)",
+      "User-Agent": "ReforgerHost/1.0 (+workshop lookup)",
       Accept: "text/html",
     },
     cache: "no-store",

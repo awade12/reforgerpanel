@@ -1,5 +1,6 @@
 import { HttpError } from "../lib/shared/http-error";
 import { mergeInstanceAlerts } from "../lib/shared/alerts";
+import { PANEL_NAME } from "../lib/shared/panel-brand";
 import { buildDiscordStatusEmbed, panelSupportsStatusImage, statusImageUrl } from "../lib/shared/discord-status";
 import { PANEL_PUBLIC_URL } from "../lib/shared/constants";
 import type { InstanceAlertEvent, InstanceRecord } from "../lib/shared/types";
@@ -114,7 +115,7 @@ export async function sendTestAlert(instanceId: string) {
   const result = await notifyDiscordLegacy(
     "test",
     instance,
-    "Test alert from Reforger Panel — webhook is working.",
+    `Test alert from ${PANEL_NAME} — webhook is working.`,
     webhookUrl,
   );
   if (!result.ok) {

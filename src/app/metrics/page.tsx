@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Shell, Button, PageHeader, api, ApiError } from "@/components/Shell";
+import { PanelAgentStatusCard } from "@/components/panel-agent-status-card";
 import { HostMetricsPanel } from "@/components/host-metrics-panel";
 import { InstanceMetricsPanel } from "@/components/instance-metrics-panel";
 import type { GameInstallStatus, HostInfo, MetricsSummary } from "@/lib/shared/types";
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type View = "host" | "instance";
+type View = "agent" | "host" | "instance";
 
 export default function MetricsPage() {
   const [instances, setInstances] = useState<InstanceMetrics[]>([]);
@@ -25,7 +26,7 @@ export default function MetricsPage() {
   const [status, setStatus] = useState<MetricsSummary | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<View>("host");
+  const [view, setView] = useState<View>("agent");
   const [selectedId, setSelectedId] = useState("");
 
   async function load() {
@@ -94,8 +95,15 @@ export default function MetricsPage() {
         <div className="inline-flex border border-border">
           <button
             type="button"
+            onClick={() => setView("agent")}
+            className={`px-4 py-2 text-sm ${view === "agent" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Agent
+          </button>
+          <button
+            type="button"
             onClick={() => setView("host")}
-            className={`px-4 py-2 text-sm ${view === "host" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={`border-l border-border px-4 py-2 text-sm ${view === "host" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             Host
           </button>
@@ -124,15 +132,16 @@ export default function MetricsPage() {
         )}
       </div>
 
-      {loading && !host ? (
+      {loading && !host && view !== "agent" ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : view === "agent" ? (
+        <PanelAgentStatusCard showDashboardLink showMetricsLink={false} />
       ) : view === "host" ? (
         <HostMetricsPanel
           initial={host}
           game={game}
           instances={instances}
           postgresEnabled={status?.enabled ?? false}
-          metricsStatus={status}
           onSelectInstance={openInstance}
         />
       ) : selected ? (

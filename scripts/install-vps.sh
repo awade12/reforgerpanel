@@ -285,7 +285,7 @@ print_summary() {
   cat <<EOF
 
 ================================================================================
- Reforger Panel installed (HTTPS)
+ Reforger Host installed (HTTPS)
 ================================================================================
   Install dir : ${INSTALL_DIR}
   Panel user  : ${PANEL_USER}

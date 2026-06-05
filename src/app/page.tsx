@@ -81,7 +81,7 @@ export default function DashboardPage() {
     <Shell>
       <PageHeader
         title="Dashboard"
-        description="Host resources and dedicated server instances on this machine."
+        description="Your servers on this machine — status, players, and quick actions."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="ghost" disabled={refreshing} onClick={() => void load(true)}>

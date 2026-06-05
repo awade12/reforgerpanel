@@ -8,7 +8,7 @@ ok() { echo "  OK  $*"; }
 bad() { echo "  FAIL $*"; FAIL=1; }
 warn() { echo "  WARN $*"; }
 
-echo "Reforger Panel — post-install check"
+echo "Reforger Host — post-install check"
 echo
 
 for svc in caddy reforgerpanel-agent reforgerpanel; do

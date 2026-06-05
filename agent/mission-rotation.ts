@@ -12,7 +12,8 @@ import {
   startInstanceById,
   stopInstanceById,
 } from "./instances";
-import { isGameUpdateRunning, isMaintenanceRunning } from "./maintenance";
+import { isMaintenanceRunning } from "./maintenance";
+import { isGameUpdateRunning } from "./monitor";
 import { getMission, listAllMissions, mergeMissionModsIntoInstance } from "./missions";
 import { reconcileInstanceStatus } from "./instance-state";
 import { downloadWorkshopMods } from "./workshop";

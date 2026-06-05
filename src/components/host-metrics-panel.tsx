@@ -21,19 +21,14 @@ import {
   TIME_RANGES,
   computeHostStats,
   formatDelta,
-  formatGraphLabel,
-  formatStoredLabel,
-  graphLabelTooltip,
   hostSampleToChart,
   metricsQuery,
   sparklineToChart,
-  storedHistoryTooltip,
   type HostMetricsResponse,
   type InstancesOverviewResponse,
 } from "@/lib/instance-metrics";
-import { MetricsStatHint } from "@/components/metrics-stat-hint";
 import { MetricsAreaChart, MetricsMultiLineChart, MetricsSparkline, MetricsStatTile } from "@/components/metrics-chart";
-import { Card, api, StatusBadge } from "@/components/Shell";
+import { Card, Stat, api, StatusBadge } from "@/components/Shell";
 import {
   Select,
   SelectContent,
@@ -49,14 +44,12 @@ export function HostMetricsPanel({
   game,
   instances = [],
   postgresEnabled = false,
-  metricsStatus = null,
   onSelectInstance,
 }: {
   initial: HostInfo | null;
   game: GameInstallStatus | null;
   instances?: InstanceMetrics[];
   postgresEnabled?: boolean;
-  metricsStatus?: import("@/lib/shared/types").MetricsSummary | null;
   onSelectInstance?: (id: string) => void;
 }) {
   const [host, setHost] = useState<HostInfo | null>(initial);
@@ -178,16 +171,39 @@ export function HostMetricsPanel({
         </div>
       )}
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4">
-          <div>
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <p className="font-mono text-[11px] text-muted-foreground">Host</p>
-            <h2 className="mt-0.5 text-lg font-medium text-foreground">{host.hostname || host.ips[0] || "—"}</h2>
-            <p className="mt-1 font-mono text-[11px] text-muted-foreground">{host.ips[0] || "—"}</p>
+            <h2 className="mt-0.5 text-sm font-medium text-foreground">
+              {host.hostname || "—"}
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                · {host.publicIpHint || host.ips[0] || "—"}
+              </span>
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {host.uptimeLabel ?? "—"} uptime
+              {postgresEnabled && chartData.length > 0 && (
+                <>
+                  {" "}
+                  · {TIME_RANGES.find((r) => r.value === range)?.label ?? range} charts (
+                  {chartData.length} points)
+                </>
+              )}
+              {!postgresEnabled && <> · live sampling</>}
+              {lastRefresh && (
+                <>
+                  {" "}
+                  · refreshed{" "}
+                  {lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </>
+              )}
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             {postgresEnabled && (
               <Select value={range} onValueChange={(v) => setRange(v as MetricsTimeRange)}>
-                <SelectTrigger className="h-8 w-[132px] font-mono text-xs">
+                <SelectTrigger className="h-8 w-[128px] text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -199,98 +215,46 @@ export function HostMetricsPanel({
                 </SelectContent>
               </Select>
             )}
-            <div className="flex flex-wrap items-center gap-5 text-right">
-              <div>
-                <p className="font-mono text-[10px] uppercase text-muted-foreground">Uptime</p>
-                <p className="text-sm tabular-nums text-foreground">{host.uptimeLabel ?? "—"}</p>
-              </div>
-              {postgresEnabled && postgresHistory?.resolution ? (
-                <MetricsStatHint
-                  label="Graph"
-                  value={formatGraphLabel(range, chartData.length)}
-                  tip={graphLabelTooltip({
-                    chartPoints: chartData.length,
-                    rawCount: postgresHistory.rawSampleCount,
-                    resolution: postgresHistory.resolution,
-                  })}
-                />
-              ) : (
-                <div>
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground">Graph</p>
-                  <p className="text-sm tabular-nums text-foreground">
-                    {loadError || !postgresEnabled
-                      ? `${chartData.length} live points`
-                      : "Loading…"}
-                  </p>
-                </div>
-              )}
-              {metricsStatus?.enabled && (
-                <MetricsStatHint
-                  label="Saved"
-                  value={formatStoredLabel(
-                    metricsStatus.hostSamples,
-                    metricsStatus.instanceSamples,
-                    metricsStatus.retentionDays,
-                  )}
-                  tip={storedHistoryTooltip(
-                    metricsStatus.hostSamples,
-                    metricsStatus.instanceSamples,
-                    metricsStatus.retentionDays,
-                  )}
-                />
-              )}
-              {lastRefresh && (
-                <div>
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground">Updated</p>
-                  <p className="text-sm tabular-nums text-foreground">
-                    {lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                  </p>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping bg-chart-1/50" />
-                  <span className="relative inline-flex size-2 bg-chart-1" />
-                </span>
-                <span className="font-mono text-[10px] uppercase text-chart-1">Live</span>
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-1.5 border border-chart-1/40 bg-chart-1/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-chart-1">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping bg-chart-1/60" />
+                <span className="relative size-1.5 bg-chart-1" />
+              </span>
+              Live
+            </span>
           </div>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5">
-          <div className="border-b border-r border-border px-4 py-3">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">CPU cores</p>
-            <p className="mt-1 text-sm text-foreground">{host.cpuCount ?? "—"}</p>
-          </div>
-          <div className="border-b border-border px-4 py-3 lg:border-r">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">Load avg</p>
-            <p className="mt-1 font-mono text-sm text-foreground">
-              {host.loadAvg ? host.loadAvg.map((v) => v.toFixed(2)).join(" · ") : "—"}
-            </p>
-          </div>
-          <div className="border-b border-r border-border px-4 py-3">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">Host memory</p>
-            <p className="mt-1 text-sm text-foreground">
-              {host.memoryUsedMb ?? 0} / {host.memoryTotalMb ?? 0} MB ({memPct}%)
-            </p>
-          </div>
-          <div className="border-b border-r border-border px-4 py-3">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">Network</p>
-            <p className="mt-1 text-sm text-foreground">
-              In {formatBandwidth(host.networkIngressMbps)} · Out {formatBandwidth(host.networkEgressMbps)}
-            </p>
-            {host.networkInterface && (
-              <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">{host.networkInterface}</p>
-            )}
-          </div>
-          <div className="border-b border-border px-4 py-3">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">Disk</p>
-            <p className="mt-1 text-sm text-foreground">
-              {host.diskFreeGb} GB free
-              {diskPct != null ? ` · ${diskPct}% used` : ""}
-            </p>
-          </div>
+          <Stat
+            label="CPU"
+            value={`${liveLatest?.cpu ?? cpuPercent(host)}%`}
+            hint={`${host.cpuCount ?? "?"} cores · load ${host.loadAvg?.[0]?.toFixed(2) ?? "—"}`}
+          />
+          <Stat
+            label="Memory"
+            value={`${memPct}%`}
+            hint={`${host.memoryUsedMb ?? 0} / ${host.memoryTotalMb ?? 0} MB · ${host.memoryFreeMb ?? 0} MB free`}
+          />
+          <Stat
+            label="Load avg"
+            value={host.loadAvg ? host.loadAvg[0].toFixed(2) : "—"}
+            hint={
+              host.loadAvg
+                ? `1m · 5m · 15m: ${host.loadAvg.map((v) => v.toFixed(2)).join(" · ")}`
+                : undefined
+            }
+          />
+          <Stat
+            label="Network"
+            value={`↓ ${formatBandwidth(host.networkIngressMbps)}`}
+            hint={`↑ ${formatBandwidth(host.networkEgressMbps)}${host.networkInterface ? ` · ${host.networkInterface}` : ""}`}
+          />
+          <Stat
+            label="Disk"
+            value={`${host.diskFreeGb} GB free`}
+            hint={diskPct != null ? `${diskPct}% used · ${counts.running} server(s) running` : undefined}
+          />
         </div>
       </Card>
 
@@ -299,12 +263,12 @@ export function HostMetricsPanel({
           <MetricsStatTile
             label={`Avg CPU · ${TIME_RANGES.find((r) => r.value === range)?.label ?? range}`}
             value={hostStats.avgCpu != null ? `${hostStats.avgCpu}%` : "—"}
-            sub={hostStats.peakCpu != null ? `Peak ${hostStats.peakCpu}%` : undefined}
+            sub={hostStats.peakCpu != null ? `Peak ${Math.round(hostStats.peakCpu)}%` : undefined}
           />
           <MetricsStatTile
             label="Avg memory"
             value={hostStats.avgMemory != null ? `${hostStats.avgMemory}%` : "—"}
-            sub={hostStats.peakMemory != null ? `Peak ${hostStats.peakMemory}%` : undefined}
+            sub={hostStats.peakMemory != null ? `Peak ${Math.round(hostStats.peakMemory)}%` : undefined}
           />
           <MetricsStatTile
             label="Peak players"

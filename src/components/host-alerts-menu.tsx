@@ -27,7 +27,7 @@ function checkClass(level: HostStatusCheck["level"]) {
   return "text-destructive";
 }
 
-export function HostAlertsMenu() {
+export function HostAlertsMenu({ variant = "default" }: { variant?: "default" | "sidebar" }) {
   const [status, setStatus] = useState<HostStatus | null>(null);
 
   useEffect(() => {
@@ -60,7 +60,12 @@ export function HostAlertsMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative inline-flex size-8 shrink-0 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className={cn(
+            "relative inline-flex size-8 shrink-0 items-center justify-center border text-muted-foreground transition-colors",
+            variant === "sidebar"
+              ? "border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              : "border-border hover:bg-secondary hover:text-foreground",
+          )}
           aria-label={issues.length ? `${issues.length} alerts` : "Alerts"}
         >
           <BellIcon className="size-4" strokeWidth={1.75} />

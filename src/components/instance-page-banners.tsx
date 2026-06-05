@@ -4,12 +4,18 @@ import { useInstanceWorkspace } from "@/components/instance-workspace";
 import { cn } from "@/lib/utils";
 
 export function InstancePageBanners() {
-  const { actionWarnings, message, actionError } = useInstanceWorkspace();
+  const { actionWarnings, message, actionError, pollStale } = useInstanceWorkspace();
 
-  if (!actionWarnings.length && !message && !actionError) return null;
+  if (!actionWarnings.length && !message && !actionError && !pollStale) return null;
 
   return (
     <>
+      {pollStale && (
+        <div className="mb-6 border border-[#d4a574]/30 bg-[#d4a574]/10 px-4 py-3 text-sm text-[#d4a574]">
+          Status may be outdated — the panel could not refresh from the agent. The server may still be running; try
+          Refresh or reload the page.
+        </div>
+      )}
       {actionWarnings.length > 0 && (
         <div className="mb-6 border border-[#d4a574]/30 bg-[#d4a574]/10 px-4 py-3">
           <p className="mb-2 text-sm font-medium text-[#d4a574]">Start warnings</p>

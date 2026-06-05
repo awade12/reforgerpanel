@@ -1,0 +1,61 @@
+---
+description: Keep CHANGELOG.md and panel version in sync with shipped work
+alwaysApply: true
+---
+
+# Changelog and panel version
+
+When you finish a task that changes behavior, UI, agent API, scripts, or docs operators care about, update the release notes in the same session. Do not wait for the user to ask.
+
+## Files
+
+- `CHANGELOG.md` — source of truth shown on **Hosting guide** (`/help`)
+- `package.json` — `version` field; sidebar shows `v{version}` via `lib/shared/panel-version.ts`
+
+## On every meaningful change
+
+1. Add bullets under **`## [Unreleased]`** using [Keep a Changelog](https://keepachangelog.com/) sections:
+   - **Added** — new features
+   - **Changed** — behavior or UI changes
+   - **Fixed** — bug fixes
+   - **Removed** — dropped behavior
+   - **Security** — auth, secrets, exposure fixes
+2. Write for **solo VPS operators** (plain language, no internal refactors unless they affect users).
+3. One line per item; start with a verb ("Add …", "Fix …").
+4. Skip changelog updates for typo-only comments, formatting-only diffs, or pure refactors with no user-visible effect.
+
+## When releasing a version
+
+Only when the user asks to release, tag, or bump version:
+
+1. Move `[Unreleased]` items into a new section: `## [x.y.z] - YYYY-MM-DD` (today, ISO date).
+2. Leave an empty `## [Unreleased]` at the top for the next work.
+3. Bump `package.json` `version` to match (semver: patch for fixes, minor for features, major for breaking changes).
+
+## Examples
+
+```markdown
+## [Unreleased]
+
+### Added
+- Hosting guide page with troubleshooting for solo VPS setups
+
+### Fixed
+- Instance settings no longer reset when the agent polls status
+```
+
+```markdown
+## [0.1.1] - 2026-06-10
+
+### Fixed
+- …
+
+## [Unreleased]
+
+### Added
+```
+
+## Do not
+
+- Mention PostgreSQL or other implementation details unless the release is specifically about database setup.
+- Duplicate the entire changelog in commit messages; `CHANGELOG.md` is enough.

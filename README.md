@@ -1,6 +1,6 @@
-# Reforger Panel
+# Reforger Host
 
-Custom Arma Reforger dedicated server control panel for Ubuntu 22.04+.
+Arma Reforger dedicated server console for Ubuntu 22.04+.
 
 **Repository:** [github.com/awade12/reforgerpanel](https://github.com/awade12/reforgerpanel)
 

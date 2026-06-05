@@ -50,6 +50,8 @@ import { collectStartWarnings, assertPreflightForStart } from "./diagnostics";
 import { applyUfwRules } from "./firewall";
 import { getSettings } from "./db";
 import {
+  isInstanceServiceActive,
+  observeInstanceStatus,
   reconcileInstanceStatus,
   readRuntimeCache,
   RUNTIME_CACHE_MS,
@@ -203,7 +205,7 @@ function readInstanceConfigSafe(instance: InstanceRecord) {
 }
 
 function computeRuntimeMeta(instance: InstanceRecord): RuntimeMeta {
-  const meta: RuntimeMeta = { systemdActive: isActive(instance) };
+  const meta: RuntimeMeta = { systemdActive: isInstanceServiceActive(instance) };
   if (!meta.systemdActive) return meta;
 
   try {
@@ -247,7 +249,7 @@ export function getRuntimeMeta(instance: InstanceRecord): RuntimeMeta {
 
 export function listInstancesDetailed(): InstanceWithConfig[] {
   return listInstances().map((raw) => {
-    const instance = reconcileInstanceStatus(raw);
+    const instance = observeInstanceStatus(raw);
     let config: InstanceWithConfig["config"];
     try {
       config = readInstanceConfig(instance);
@@ -269,7 +271,7 @@ export function listInstancesDetailed(): InstanceWithConfig[] {
 export function getInstanceDetailed(id: string): InstanceWithConfig | null {
   const raw = getInstance(id);
   if (!raw) return null;
-  const instance = reconcileInstanceStatus(raw);
+  const instance = observeInstanceStatus(raw);
   return {
     ...instance,
     config: readInstanceConfig(instance),
@@ -417,7 +419,7 @@ export async function startInstanceById(id: string, options?: { force?: boolean 
       updateInstance(id, { status: "crashed" });
       throw new HttpError(502, result.stderr || "Failed to start systemd unit");
     }
-    updateInstance(id, { status: "running", lastStartedAt: new Date().toISOString() });
+    updateInstance(id, { status: "starting", lastStartedAt: new Date().toISOString() });
     addAudit("instance.start", instance.slug);
     if (warnings.length) {
       await notifyDiscord("start-warning", instance, warnings.join("\n"), { warnings: warnings.length });
@@ -474,7 +476,7 @@ export async function restartInstanceById(id: string) {
     if (!result.ok) {
       throw new HttpError(502, result.stderr || "Failed to restart systemd unit");
     }
-    updateInstance(id, { status: "running", lastStartedAt: new Date().toISOString() });
+    updateInstance(id, { status: "starting", lastStartedAt: new Date().toISOString() });
     addAudit("instance.restart", instance.slug);
     await notifyDiscord("restarted", instance, "Instance restarted");
     void syncInstanceStatusEmbed(id);

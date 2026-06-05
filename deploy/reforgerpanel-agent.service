@@ -1,5 +1,5 @@
 [Unit]
-Description=Reforger Panel Host Agent
+Description=Reforger Host Agent
 After=network-online.target postgresql.service
 Wants=network-online.target
 

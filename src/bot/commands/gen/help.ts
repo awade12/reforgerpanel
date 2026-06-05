@@ -1,14 +1,15 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { PANEL_NAME } from "@/lib/shared/panel-brand";
 import type { BotCommand } from "../../types/command";
 import { brandColor } from "../../utils/embeds/colors";
 
 export const command: BotCommand = {
   group: "gen",
-  data: new SlashCommandBuilder().setName("help").setDescription("List Reforger Panel bot commands"),
+  data: new SlashCommandBuilder().setName("help").setDescription(`List ${PANEL_NAME} bot commands`),
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setColor(brandColor)
-      .setTitle("Reforger Panel bot")
+      .setTitle(`${PANEL_NAME} bot`)
       .setDescription("Dashboard commands for your Arma Reforger host.")
       .addFields(
         {

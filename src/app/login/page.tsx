@@ -5,6 +5,7 @@ import { ArrowRightIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { PANEL_LOGIN_MONO, PANEL_PRODUCT_NAME } from "@/lib/shared/panel-brand";
 
 const capabilities = [
   "Deploy and restart dedicated instances",
@@ -76,9 +77,9 @@ export default function LoginPage() {
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_0.9fr]">
       <section className="relative flex flex-col justify-between border-b border-border bg-sidebar px-8 py-10 sm:px-12 lg:border-b-0 lg:border-r lg:px-16 lg:py-14">
         <div className="font-mono text-[11px] text-muted-foreground">
-          <span className="text-foreground">reforger.panel</span>
+          <span className="text-foreground">{PANEL_LOGIN_MONO}</span>
           <span className="mx-2 opacity-40">/</span>
-          <span>host access</span>
+          <span>{PANEL_PRODUCT_NAME}</span>
         </div>
 
         <div className="my-auto max-w-xl py-16 lg:py-24">
@@ -86,7 +87,7 @@ export default function LoginPage() {
             Server control, on your metal.
           </h1>
           <p className="mt-8 max-w-md text-[15px] leading-7 text-muted-foreground">
-            A local panel for Arma Reforger — instances, game installs, and runtime ops without leaving the box.
+            Run Arma Reforger dedicated servers on your VPS — instances, game installs, and ops in one place.
           </p>
 
           <ul className="mt-12 space-y-3 border-t border-border pt-8">

@@ -172,6 +172,13 @@ export interface MetricsSummary {
   oldestSample: string | null;
 }
 
+export interface HostStatusMetrics extends MetricsSummary {
+  latestSampleAt: string | null;
+  latestCpuPercent: number | null;
+  latestMemoryPercent: number | null;
+  collectIntervalSec: number;
+}
+
 export interface InstanceMetricsStats {
   avgFps: number | null;
   minFps: number | null;
@@ -234,6 +241,12 @@ export type HostStatusInstance = {
 export interface HostStatus {
   at: string;
   overall: HostHealthLevel;
+  agent?: {
+    startedAt: string;
+    uptimeSec: number;
+    metricsCollecting: boolean;
+  };
+  metrics?: HostStatusMetrics;
   host: {
     hostname: string;
     primaryIp: string;

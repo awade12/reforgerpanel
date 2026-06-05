@@ -1,10 +1,11 @@
 import { EmbedBuilder } from "discord.js";
+import { PANEL_NAME } from "@/lib/shared/panel-brand";
 import { brandColor, statusColor, statusLabel } from "./colors";
 import type { HostStatus, InstanceWithConfig } from "../agent";
 import { connectAddress, formatUptime, scenarioName } from "@/lib/shared/discord-status";
 
 export function panelFooter(panelUrl?: string) {
-  return { text: panelUrl ? "Reforger Panel · open dashboard" : "Reforger Panel" };
+  return { text: panelUrl ? `${PANEL_NAME} · open dashboard` : PANEL_NAME };
 }
 
 export function hostStatusEmbed(status: HostStatus, panelUrl?: string) {
@@ -100,7 +101,7 @@ export function dashboardEmbed(status: HostStatus, panelUrl?: string) {
 
   const embed = new EmbedBuilder()
     .setColor(brandColor)
-    .setAuthor({ name: "Reforger Panel · Dashboard" })
+    .setAuthor({ name: `${PANEL_NAME} · Dashboard` })
     .setTitle(host.hostname)
     .setDescription(
       [

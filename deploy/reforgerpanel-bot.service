@@ -1,5 +1,5 @@
 [Unit]
-Description=Reforger Panel Discord Bot
+Description=Reforger Host Discord Bot
 After=network-online.target reforgerpanel-agent.service
 Wants=reforgerpanel-agent.service
 

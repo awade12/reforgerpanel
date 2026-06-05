@@ -1,4 +1,4 @@
-# Reforger Panel — VPS deployment
+# Reforger Host — VPS deployment
 
 Deploy on a fresh **Ubuntu 22.04 / 24.04** VPS (2 GB RAM minimum, 4 GB+ recommended for game server + build).
 

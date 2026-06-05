@@ -1,3 +1,4 @@
+import { PANEL_NAME } from "../../lib/shared/panel-brand";
 import { getSettings, listAudit, saveSettings } from "../db";
 import { mergeSettingsSecrets, redactSettingsForPanel } from "../../lib/shared/secrets";
 import { sendResendTestEmail } from "../email";
@@ -39,7 +40,7 @@ export async function handleSettingsRoutes(ctx: RequestContext) {
     const { notifyDiscordPlain } = await import("../discord");
     const webhook = getSettings().discordWebhookUrl.trim();
     if (!webhook) return sendJson(res, 400, { error: "Discord webhook URL not configured" });
-    const result = await notifyDiscordPlain("Reforger Panel", "Global webhook test — alerts are working.", webhook);
+    const result = await notifyDiscordPlain(PANEL_NAME, "Global webhook test — alerts are working.", webhook);
     if (!result.ok) return sendJson(res, 502, { error: result.error });
     sendJson(res, 200, { ok: true });
     return true;

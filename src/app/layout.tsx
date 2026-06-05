@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { PANEL_NAME } from "@/lib/shared/panel-brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Reforger Panel",
+  title: PANEL_NAME,
   description: "Arma Reforger dedicated server control panel",
 };
 

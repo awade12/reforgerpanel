@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { agentFetch } from "@/lib/agent-client";
+import { PANEL_NAME } from "@/lib/shared/panel-brand";
 import { statusBadgeColors, statusLabel, toStatusCardData } from "@/lib/shared/discord-status";
 import type { InstanceRecord, RuntimeMeta } from "@/lib/shared/types";
 import type { ServerConfig } from "@/lib/shared/config-schema";
@@ -172,7 +173,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
               }}
             >
               <span>{card.slug}</span>
-              <span>Reforger Panel</span>
+              <span>{PANEL_NAME}</span>
             </div>
           </div>
         </div>

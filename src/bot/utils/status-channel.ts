@@ -1,4 +1,5 @@
 import { EmbedBuilder, type Client, type TextChannel } from "discord.js";
+import { PANEL_NAME } from "@/lib/shared/panel-brand";
 import type { BotDashboardSync } from "@/lib/shared/types";
 import { agentFetch } from "./agent";
 
@@ -14,7 +15,7 @@ function maintenanceEmbed(message: string) {
     .setColor(MAINTENANCE_COLOR)
     .setTitle("Scheduled maintenance")
     .setDescription(message || "Maintenance in progress — servers may restart.")
-    .setFooter({ text: "Reforger Panel" })
+    .setFooter({ text: PANEL_NAME })
     .setTimestamp();
 }
 

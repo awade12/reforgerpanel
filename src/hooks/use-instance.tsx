@@ -52,24 +52,38 @@ function normalizeActionResponse(data: ActionResponse) {
 export function useInstance(id: string) {
   const [instance, setInstance] = useState<InstanceDetail | null>(null);
   const [error, setError] = useState("");
+  const [pollStale, setPollStale] = useState(false);
   const [actionWarnings, setActionWarnings] = useState<string[]>([]);
+  const reloadGeneration = useRef(0);
+  const pollFailures = useRef(0);
 
   const reload = useCallback(async () => {
+    const generation = ++reloadGeneration.current;
     const data = await api<InstanceDetail>(`instances/${id}`);
+    if (generation !== reloadGeneration.current) return normalizeInstanceDetail(data);
     const normalized = normalizeInstanceDetail(data);
     setInstance(normalized);
     setError("");
+    pollFailures.current = 0;
+    setPollStale(false);
     return normalized;
   }, [id]);
 
   useEffect(() => {
+    reloadGeneration.current += 1;
+    setInstance(null);
+    setPollStale(false);
+    pollFailures.current = 0;
     void reload().catch((err) => setError(err instanceof Error ? err.message : "Failed to load"));
-  }, [reload]);
+  }, [id, reload]);
 
   useEffect(() => {
     const pollMs = instance && isInstanceBusy(instance.status) ? 3000 : 15000;
     const timer = setInterval(() => {
-      void reload().catch(() => undefined);
+      void reload().catch(() => {
+        pollFailures.current += 1;
+        if (pollFailures.current >= 2) setPollStale(true);
+      });
     }, pollMs);
     return () => clearInterval(timer);
   }, [instance?.status, reload]);
@@ -84,6 +98,8 @@ export function useInstance(id: string) {
       const data = await api<ActionResponse>(`instances/${id}/${kind}`, init);
       const { instance: next, warnings } = normalizeActionResponse(data);
       setInstance(next);
+      pollFailures.current = 0;
+      setPollStale(false);
       setActionWarnings(warnings);
       return warnings;
     },
@@ -92,7 +108,7 @@ export function useInstance(id: string) {
 
   const clearActionWarnings = useCallback(() => setActionWarnings([]), []);
 
-  return { instance, error, reload, runAction, actionWarnings, clearActionWarnings };
+  return { instance, error, pollStale, reload, runAction, actionWarnings, clearActionWarnings };
 }
 
 export function useInstanceShellHeader(

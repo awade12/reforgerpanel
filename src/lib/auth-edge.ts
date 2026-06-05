@@ -9,14 +9,18 @@ function legacySessionSecret(env: NodeJS.ProcessEnv = process.env) {
   );
 }
 
+export async function getSessionFromCookie(value: string | undefined) {
+  if (!value) return null;
+  return verifySessionToken(value);
+}
+
 export async function verifySessionCookie(value: string | undefined) {
   if (!value) return false;
-  const session = await verifySessionToken(value);
+  const session = await getSessionFromCookie(value);
   if (session) return true;
   return value === legacySessionSecret();
 }
 
-export async function getSessionFromCookie(value: string | undefined) {
-  if (!value) return null;
-  return verifySessionToken(value);
+export function isLegacySessionCookie(value: string | undefined) {
+  return Boolean(value && value === legacySessionSecret());
 }

@@ -1,3 +1,4 @@
+import { PANEL_NAME } from "../lib/shared/panel-brand";
 import type { InstanceRecord } from "../lib/shared/types";
 import { getSettings } from "./db";
 
@@ -117,7 +118,7 @@ export async function notifyDiscordLegacy(
     content: mention || undefined,
     embeds: [
       {
-        title: `Reforger Panel — ${event}`,
+        title: `${PANEL_NAME} — ${event}`,
         description: message,
         color: event.includes("crash") ? 0xff4444 : event.includes("recovery") ? 0x66cc88 : 0x9966ff,
         fields: [

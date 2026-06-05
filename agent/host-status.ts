@@ -9,7 +9,9 @@ import { parseFpsFromLogs } from "./logs";
 import { checkConfiguredMods } from "./mods";
 import { listInstances } from "./db";
 import { getGameInstallStatus } from "./steamcmd";
+import { getAgentRuntime } from "./agent-runtime";
 import { agentConfig } from "./config";
+import { metricsEnabled, queryLatestHostMetric, queryMetricsSummary } from "./db/metrics";
 
 type StatusCache = {
   fullAt: number;
@@ -331,7 +333,23 @@ export async function getHostStatus(options?: { quick?: boolean }): Promise<Host
     if (!quick && now - statusCache.fullAt < FULL_CACHE_MS) return statusCache.full;
   }
 
-  const status = await buildHostStatus(quick);
+  const built = await buildHostStatus(quick);
+  const summary = await queryMetricsSummary();
+  const latest = summary.enabled ? await queryLatestHostMetric() : null;
+  const status: HostStatus = {
+    ...built,
+    agent: {
+      ...getAgentRuntime(),
+      metricsCollecting: metricsEnabled(),
+    },
+    metrics: {
+      ...summary,
+      latestSampleAt: latest?.at ?? null,
+      latestCpuPercent: latest?.cpuPercent ?? null,
+      latestMemoryPercent: latest?.memoryPercent ?? null,
+      collectIntervalSec: 15,
+    },
+  };
 
   if (!statusCache) {
     statusCache = {

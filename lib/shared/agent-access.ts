@@ -22,6 +22,9 @@ export function agentRoutePolicy(pathname: string, method: string): AgentRoutePo
   if (pathname.startsWith("/host/panel/")) {
     return { permission: "settings", write: method !== "GET" };
   }
+  if (pathname === "/metrics/status" && method === "GET") {
+    return { permission: "dashboard", write: false };
+  }
   if (pathname.startsWith("/metrics")) {
     return { permission: "metrics", write: false };
   }

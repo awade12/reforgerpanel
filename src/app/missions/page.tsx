@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Shell, Card, Button, Input, TextArea, api, ApiError } from "@/components/Shell";
+import { PageContentSkeleton } from "@/components/page-content-skeleton";
+import { usePanelData } from "@/hooks/use-panel-data";
 import type { WorkshopAssetSummary } from "@/lib/shared/workshop-catalog";
 import { slugifyWorkshopName } from "@/lib/shared/workshop-catalog";
 
@@ -14,7 +16,8 @@ interface Mission {
 }
 
 export default function MissionsPage() {
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const { data: missions, loading, reload } = usePanelData<Mission[]>("missions");
+  const missionList = missions ?? [];
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
   const [scenarioId, setScenarioId] = useState("");
@@ -25,14 +28,6 @@ export default function MissionsPage() {
   const [workshopUrl, setWorkshopUrl] = useState("");
   const [workshop, setWorkshop] = useState<WorkshopAssetSummary | null>(null);
   const [workshopLoading, setWorkshopLoading] = useState(false);
-
-  async function load() {
-    setMissions(await api<Mission[]>("missions"));
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   async function lookupWorkshop() {
     setWorkshopLoading(true);
@@ -82,7 +77,7 @@ export default function MissionsPage() {
       }),
     });
     setMessage(`Registered workshop mission "${scenario.name}"`);
-    await load();
+    await reload();
   }
 
   async function register() {
@@ -97,12 +92,20 @@ export default function MissionsPage() {
       body: JSON.stringify({ slug, title, scenarioId, requiredMods, files }),
     });
     setMessage("Mission registered");
-    await load();
+    await reload();
   }
 
   async function remove(slugToRemove: string) {
     await api(`missions/${slugToRemove}`, { method: "DELETE" });
-    await load();
+    await reload();
+  }
+
+  if (loading && missions === undefined) {
+    return (
+      <Shell header={{ title: "Missions", meta: "Workshop import and custom mission library" }}>
+        <PageContentSkeleton />
+      </Shell>
+    );
   }
 
   return (
@@ -194,7 +197,7 @@ export default function MissionsPage() {
 
         <Card title="Mission library">
           <div className="space-y-4">
-            {missions.map((mission) => (
+            {missionList.map((mission) => (
               <div key={mission.slug} className="rounded-md border border-zinc-800 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -209,7 +212,7 @@ export default function MissionsPage() {
                 </div>
               </div>
             ))}
-            {!missions.length && <p className="text-sm text-zinc-400">No custom missions yet.</p>}
+            {!missionList.length && <p className="text-sm text-zinc-400">No custom missions yet.</p>}
           </div>
         </Card>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PanelInstanceAlerts, PanelSettingsResponse } from "@/lib/shared/secrets";
 import { normalizeInstanceAlertsResponse } from "@/lib/shared/secrets";
 import type { InstanceDetail } from "@/hooks/use-instance";
@@ -39,10 +39,18 @@ export function InstanceAlertsPanel({
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const hydratedForId = useRef<string | null>(null);
 
   useEffect(() => {
+    hydratedForId.current = null;
+  }, [id]);
+
+  useEffect(() => {
+    if (instance.id !== id) return;
+    if (hydratedForId.current === id) return;
+    hydratedForId.current = id;
     setAlerts(normalizeInstanceAlertsResponse(instance.alerts));
-  }, [instance]);
+  }, [id, instance]);
 
   useEffect(() => {
     void api<PanelSettingsResponse>("settings")

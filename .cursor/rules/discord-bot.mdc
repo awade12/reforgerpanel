@@ -4,7 +4,7 @@ globs: src/bot/**/*
 alwaysApply: false
 ---
 
-# Reforger Panel Discord bot
+# Reforger Host Discord bot
 
 ## Layout
 

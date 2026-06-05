@@ -121,7 +121,7 @@ function runCtl(action: string, unit: string, extraArgs: string[] = []) {
 
 export function writePanelUnits(projectRoot: string) {
   const agentUnit = `[Unit]
-Description=Reforger Panel Agent
+Description=Reforger Host Agent
 After=network.target
 
 [Service]
@@ -138,7 +138,7 @@ WantedBy=multi-user.target
 `;
 
   const webUnit = `[Unit]
-Description=Reforger Panel Web
+Description=Reforger Host Web
 After=network.target reforgerpanel-agent.service
 
 [Service]

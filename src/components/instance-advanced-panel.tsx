@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { InstanceDetail } from "@/hooks/use-instance";
 import { Button, Input, api, ApiError } from "@/components/Shell";
 
@@ -22,13 +22,21 @@ export function InstanceAdvancedPanel({
   const [logLevel, setLogLevel] = useState("");
   const [autoRestart, setAutoRestart] = useState(true);
   const [saving, setSaving] = useState(false);
+  const hydratedForId = useRef<string | null>(null);
 
   useEffect(() => {
+    hydratedForId.current = null;
+  }, [id]);
+
+  useEffect(() => {
+    if (instance.id !== id) return;
+    if (hydratedForId.current === id) return;
+    hydratedForId.current = id;
     setMaxFps(String(instance.maxFps ?? 60));
     setLogStatsMs(instance.logStatsMs != null ? String(instance.logStatsMs) : "");
     setLogLevel(instance.logLevel ?? "");
     setAutoRestart(instance.autoRestart ?? true);
-  }, [instance]);
+  }, [id, instance]);
 
   async function save() {
     onError("");

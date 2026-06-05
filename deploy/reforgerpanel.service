@@ -1,5 +1,5 @@
 [Unit]
-Description=Reforger Panel Web UI
+Description=Reforger Host Web UI
 After=network-online.target postgresql.service reforgerpanel-agent.service
 Wants=network-online.target reforgerpanel-agent.service
 StartLimitIntervalSec=300

@@ -1,3 +1,4 @@
+import { PANEL_NAME } from "../lib/shared/panel-brand";
 import type { SettingsRecord } from "../lib/shared/types";
 
 export async function sendResendTestEmail(settings: SettingsRecord, to: string) {
@@ -16,8 +17,8 @@ export async function sendResendTestEmail(settings: SettingsRecord, to: string) 
     body: JSON.stringify({
       from,
       to: [to.trim()],
-      subject: "Reforger Panel — test email",
-      html: "<p>Email delivery from Reforger Panel is working.</p>",
+      subject: `${PANEL_NAME} — test email`,
+      html: `<p>Email delivery from ${PANEL_NAME} is working.</p>`,
     }),
   });
 

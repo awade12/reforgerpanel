@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { getInstance, listInstances, updateInstance, clearBotDashboardRecovery } from "./db";
-import { reconcileInstanceStatus } from "./instance-state";
-import { getInstanceSystemdStatus, isActive, restartInstance } from "./systemd";
+import { isInstanceServiceActive, observeInstanceStatus, reconcileInstanceStatus } from "./instance-state";
+import { getInstanceSystemdStatus, restartInstance } from "./systemd";
 import { monitorInstanceAlerts, notifyDiscord, syncInstanceStatusEmbed } from "./alerts";
 
 const restartWindows = new Map<string, number[]>();
@@ -71,7 +71,7 @@ export function startMonitorLoop() {
   setInterval(async () => {
     for (const raw of listInstances()) {
       let instance = reconcileInstanceStatus(raw);
-      const active = isActive(instance);
+      const active = isInstanceServiceActive(instance);
       if (instance.status === "starting" && !active && getInstanceSystemdStatus(instance) !== "activating") {
         instance = updateInstance(instance.id, { status: "stopped" }) ?? { ...instance, status: "stopped" };
       }

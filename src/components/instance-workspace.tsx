@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon } from "lucide-react";
 import type { ServerConfig } from "@/lib/shared/config-schema";
 import { InstancePageBanners } from "@/components/instance-page-banners";
@@ -25,6 +25,7 @@ type InstanceWorkspaceContextValue = {
   id: string;
   instance: InstanceDetail | null;
   error: string;
+  pollStale: boolean;
   reload: () => Promise<InstanceDetail>;
   runAction: (kind: "start" | "stop" | "restart", options?: { force?: boolean }) => Promise<string[]>;
   actionWarnings: string[];
@@ -58,7 +59,7 @@ export function useInstanceWorkspace() {
 export function InstanceWorkspace({ children }: { children: React.ReactNode }) {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { instance, error, reload, runAction, actionWarnings, clearActionWarnings } = useInstance(id);
+  const { instance, error, pollStale, reload, runAction, actionWarnings, clearActionWarnings } = useInstance(id);
 
   return (
     <Shell contentClassName="max-w-7xl">
@@ -66,6 +67,7 @@ export function InstanceWorkspace({ children }: { children: React.ReactNode }) {
         id={id}
         instance={instance}
         error={error}
+        pollStale={pollStale}
         reload={reload}
         runAction={runAction}
         actionWarnings={actionWarnings}
@@ -81,12 +83,29 @@ function InstanceWorkspaceInner({
   id,
   instance,
   error,
+  pollStale,
   reload,
   runAction,
   actionWarnings,
   clearActionWarnings,
   children,
-}: Omit<InstanceWorkspaceContextValue, "config" | "setConfig" | "configRaw" | "setConfigRaw" | "jsonEditing" | "setJsonEditing" | "scenarios" | "missions" | "saving" | "saveConfig" | "message" | "actionError" | "notify" | "fail"> & {
+}: Omit<
+  InstanceWorkspaceContextValue,
+  | "config"
+  | "setConfig"
+  | "configRaw"
+  | "setConfigRaw"
+  | "jsonEditing"
+  | "setJsonEditing"
+  | "scenarios"
+  | "missions"
+  | "saving"
+  | "saveConfig"
+  | "message"
+  | "actionError"
+  | "notify"
+  | "fail"
+> & {
   children: React.ReactNode;
 }) {
   const [config, setConfig] = useState<ServerConfig | null>(null);
@@ -125,11 +144,19 @@ function InstanceWorkspaceInner({
 
   useInstanceShellHeader(instance, handleHeaderAction);
 
+  const configHydratedForId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!instance) return;
+    configHydratedForId.current = null;
+  }, [id]);
+
+  useEffect(() => {
+    if (!instance || instance.id !== id) return;
+    if (configHydratedForId.current === id) return;
+    configHydratedForId.current = id;
     setConfig(instance.config);
     setConfigRaw(JSON.stringify(instance.config, null, 2));
-  }, [instance]);
+  }, [id, instance]);
 
   useEffect(() => {
     if (!instance) return;
@@ -156,6 +183,7 @@ function InstanceWorkspaceInner({
       notify("Configuration saved");
       setJsonEditing(false);
       const data = await reload();
+      configHydratedForId.current = id;
       setConfig(data.config);
       setConfigRaw(JSON.stringify(data.config, null, 2));
     } catch (err) {
@@ -171,6 +199,7 @@ function InstanceWorkspaceInner({
         id,
         instance,
         error,
+        pollStale,
         reload,
         runAction,
         actionWarnings,
