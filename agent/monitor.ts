@@ -14,7 +14,7 @@ import { runHostPreflightForGameUpdate } from "./preflight-host";
 import { addAudit, getInstance, getSettings, listInstances } from "./db";
 import { reconcileInstanceStatus } from "./instance-state";
 import { readInstanceConfig, startInstanceById, stopInstanceById } from "./instances";
-import { refreshWorkshopMods } from "./workshop";
+import { refreshInstanceModCache } from "./mod-refresh";
 import { notifyDiscordPlain } from "./discord";
 import { notifyGameUpdate } from "./alerts";
 
@@ -143,7 +143,7 @@ export async function runGameUpdate(options: {
             const mods = readInstanceConfig(instance).game.mods ?? [];
             if (mods.length) {
               pushLine(`Refreshing workshop mods for ${item.slug}…`);
-              refreshWorkshopMods(instance.profilePath, mods, pushLine);
+              refreshInstanceModCache(instance, pushLine);
             }
           } catch (err) {
             pushLine(

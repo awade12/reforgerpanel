@@ -101,8 +101,8 @@ export function InstanceModsPanel({
       }>(`instances/${id}/mods/download`, { method: "POST" });
       const okCount = result.results.filter((item) => item.ok).length;
       const suffix = result.restarted
-        ? " — instance restarted to download latest versions"
-        : " — start the instance to download latest versions";
+        ? " — server stopped, cache cleared, and restarted (check Logs while mods download)"
+        : " — cache cleared; start the server to download latest versions";
       onApplied(`Refreshed ${okCount}/${result.results.length} mod(s)${suffix}`);
       await refreshChecks();
     } catch (err) {

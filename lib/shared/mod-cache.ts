@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { ModEntry } from "./config-schema";
+import { normalizeAddonModId } from "./workshop-catalog";
 
 export type ModRefreshResult = {
   modId: string;
@@ -9,23 +10,31 @@ export type ModRefreshResult = {
   detail: string;
 };
 
+export type ModCachePaths = {
+  profilePath: string;
+  addonTempDir?: string;
+};
+
 export function modIdNeedle(modId: string) {
   return modId.trim().toLowerCase().replace(/[{}]/g, "");
 }
 
 export function resolveModCacheRoot(profilePath: string, foundPath: string) {
-  const addonsRoot = path.join(profilePath, "addons");
-  if (!foundPath.startsWith(addonsRoot)) return foundPath;
-  let current = foundPath;
-  while (path.dirname(current) !== addonsRoot && path.dirname(current) !== current) {
-    current = path.dirname(current);
+  for (const addonsName of ["addons", "Addons"]) {
+    const addonsRoot = path.join(profilePath, addonsName);
+    if (!foundPath.startsWith(addonsRoot)) continue;
+    let current = foundPath;
+    while (path.dirname(current) !== addonsRoot && path.dirname(current) !== current) {
+      current = path.dirname(current);
+    }
+    return current;
   }
-  return current;
+  return foundPath;
 }
 
 export function findModPath(profilePath: string, modId: string) {
   const needle = modIdNeedle(modId);
-  const roots = [path.join(profilePath, "addons"), path.join(profilePath, "logs"), profilePath];
+  const roots = [path.join(profilePath, "addons"), path.join(profilePath, "Addons"), path.join(profilePath, "logs"), profilePath];
 
   for (const root of roots) {
     if (!fs.existsSync(root)) continue;
@@ -52,29 +61,79 @@ export function findModPath(profilePath: string, modId: string) {
   return null;
 }
 
-export function modCacheEntryPath(profilePath: string, modId: string) {
-  const found = findModPath(profilePath, modId);
-  return found ? resolveModCacheRoot(profilePath, found) : null;
+export function listModCacheTargets(paths: ModCachePaths, modId: string) {
+  const id = normalizeAddonModId(modId);
+  const targets = new Set<string>();
+
+  for (const addonsName of ["addons", "Addons"]) {
+    const root = path.join(paths.profilePath, addonsName);
+    if (!fs.existsSync(root)) continue;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name.replace(/[{}]/g, "").toUpperCase() === id) {
+        targets.add(path.join(root, entry.name));
+      }
+    }
+  }
+
+  const found = findModPath(paths.profilePath, modId);
+  if (found) targets.add(resolveModCacheRoot(paths.profilePath, found));
+
+  return [...targets];
 }
 
-export function purgeModCache(profilePath: string, modId: string) {
-  const target = modCacheEntryPath(profilePath, modId);
-  if (!target) return false;
-  fs.rmSync(target, { recursive: true, force: true });
+export function modCacheEntryPath(profilePath: string, modId: string) {
+  const targets = listModCacheTargets({ profilePath }, modId);
+  return targets[0] ?? null;
+}
+
+function clearDirectoryContents(dir: string) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir)) {
+    fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
+  }
+}
+
+export function purgeInstanceModTemp(paths: ModCachePaths) {
+  if (paths.addonTempDir) clearDirectoryContents(paths.addonTempDir);
+  clearDirectoryContents(path.join(paths.profilePath, "temp"));
+}
+
+export function purgeModWorkCache(paths: ModCachePaths, modId: string) {
+  const targets = listModCacheTargets(paths, modId);
+  if (!targets.length) return false;
+  for (const target of targets) {
+    fs.rmSync(target, { recursive: true, force: true });
+  }
   return true;
 }
 
+export function purgeModCache(profilePath: string, modId: string) {
+  return purgeModWorkCache({ profilePath }, modId);
+}
+
+export function modsWithoutPinnedVersions(mods: ModEntry[]) {
+  return mods.map(({ version: _version, ...rest }) => rest);
+}
+
 export function refreshConfiguredMods(
-  profilePath: string,
+  paths: ModCachePaths,
   mods: ModEntry[],
   onLine?: (line: string) => void,
 ): { results: ModRefreshResult[] } {
+  purgeInstanceModTemp(paths);
   const results: ModRefreshResult[] = [];
   for (const mod of mods) {
     if (!mod.modId?.trim()) continue;
     const label = mod.name?.trim() || mod.modId;
     try {
-      const purged = purgeModCache(profilePath, mod.modId);
+      const purged = purgeModWorkCache(paths, mod.modId);
       const detail = purged ? "Cache cleared — will re-download on next start" : "Not cached locally";
       results.push({ modId: mod.modId, name: mod.name, ok: true, detail });
       onLine?.(`${label}: ${detail}`);

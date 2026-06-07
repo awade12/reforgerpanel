@@ -21,7 +21,7 @@ import { queryInstancePlayers } from "../players";
 import { getInstanceDiagnostics } from "../diagnostics";
 import { applyUfwRules } from "../firewall";
 import { checkConfiguredMods, missingRequiredMods } from "../mods";
-import { refreshWorkshopMods } from "../workshop";
+import { refreshInstanceModCache, refreshInstanceWorkshopMods } from "../mod-refresh";
 import { installOrUpdate } from "../steamcmd";
 import { findLatestLogFile, listLogFiles, parseFpsFromLogs, tailLogFile, tailLogLines } from "../logs";
 import {
@@ -246,12 +246,13 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
             sendJson(ctx.res, 400, { error: "No mods configured" });
             return true;
           }
-          const result = refreshWorkshopMods(item.profilePath, mods);
-          const shouldRestart = item.status === "running" || item.status === "starting";
-          if (shouldRestart) {
-            await restartInstanceById(id);
-          }
-          sendJson(ctx.res, 200, { ...result, restarted: shouldRestart });
+          const result = await refreshInstanceWorkshopMods(id);
+          sendJson(ctx.res, 200, {
+            results: result.results,
+            installDir: `${item.profilePath}/addons`,
+            restarted: result.started,
+            stopped: result.stopped,
+          });
           return true;
         }
   

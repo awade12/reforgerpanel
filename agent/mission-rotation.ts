@@ -16,7 +16,7 @@ import { isMaintenanceRunning } from "./maintenance";
 import { isGameUpdateRunning } from "./monitor";
 import { getMission, listAllMissions, mergeMissionModsIntoInstance } from "./missions";
 import { reconcileInstanceStatus } from "./instance-state";
-import { refreshWorkshopMods } from "./workshop";
+import { refreshInstanceModCache } from "./mod-refresh";
 
 const rotationOps = new Set<string>();
 
@@ -175,10 +175,7 @@ export async function runMissionRotation(
     if (rotation.downloadMods) {
       const detailed = getInstanceDetailed(instanceId);
       if (detailed) {
-        const mods = (detailed.config.game.mods ?? []).filter((mod) => mod.modId?.trim());
-        if (mods.length) {
-          refreshWorkshopMods(detailed.profilePath, mods);
-        }
+        refreshInstanceModCache(detailed);
       }
     }
 

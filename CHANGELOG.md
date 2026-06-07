@@ -9,9 +9,13 @@ All notable changes to Reforger Host are documented here.
 - Refresh workshop mods on scheduled game update (clears cached mod files before instances restart)
 - Manual **Refresh workshop mods** uses Reforger mod IDs and restarts running instances to pull latest files
 
+### Fixed
+
+- Fix workshop mod refresh not updating mods: stop the server before clearing cache, purge temp download dirs, and remove pinned mod versions from config
+
 ### Changed
 
-- Game update **Refresh workshop mods and restart instances after update** setting now clears mod cache by mod ID, not Steam numeric workshop IDs
+- Game update **Refresh workshop mods and restart instances after update** setting clears mod cache by mod ID, not Steam numeric workshop IDs
 - Hosting guide and Mods tab explain that the game downloads latest mods on start after cache refresh
 
 ## [0.2.0] - 2026-06-05
