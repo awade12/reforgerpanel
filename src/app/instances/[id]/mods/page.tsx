@@ -18,7 +18,7 @@ export default function InstanceModsPage() {
           <p className="font-mono text-[11px] text-muted-foreground">Workshop</p>
           <h1 className="mt-1 text-lg font-medium text-foreground">Mods & missions</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Add workshop mods, download to disk, and apply mission presets. Save after editing the mod list.
+            Add workshop mods, refresh cached files, and apply mission presets. Save after editing the mod list.
           </p>
         </div>
         <Button disabled={saving} onClick={() => void saveConfig()}>

@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
+import type { ModEntry } from "../lib/shared/config-schema";
 import { APP_ID_EXPERIMENTAL, APP_ID_STABLE } from "../lib/shared/constants";
 import type { Branch } from "../lib/shared/types";
-import { agentConfig } from "./config";
+import { refreshConfiguredMods, type ModRefreshResult } from "../lib/shared/mod-cache";
 import { runSteamCmd } from "./steamcmd";
 
 function appId(branch: Branch) {
@@ -36,6 +37,16 @@ export async function downloadWorkshopItem(
   ];
   const result = await runSteamCmd(args, onLine);
   return { ok: result.ok, output: result.output, workshopId: id, installDir };
+}
+
+export function refreshWorkshopMods(
+  profilePath: string,
+  mods: ModEntry[],
+  onLine?: (line: string) => void,
+): { results: ModRefreshResult[]; installDir: string } {
+  const installDir = workshopDownloadDir(profilePath);
+  fs.mkdirSync(installDir, { recursive: true });
+  return { ...refreshConfiguredMods(profilePath, mods, onLine), installDir };
 }
 
 export async function downloadWorkshopMods(

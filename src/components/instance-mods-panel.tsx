@@ -95,15 +95,18 @@ export function InstanceModsPanel({
     onError("");
     setDownloading(true);
     try {
-      const result = await api<{ results: { workshopId: string; ok: boolean; name?: string }[] }>(
-        `instances/${id}/mods/download`,
-        { method: "POST" },
-      );
+      const result = await api<{
+        results: { modId: string; ok: boolean; name?: string; detail: string }[];
+        restarted: boolean;
+      }>(`instances/${id}/mods/download`, { method: "POST" });
       const okCount = result.results.filter((item) => item.ok).length;
-      onApplied(`Downloaded ${okCount}/${result.results.length} workshop item(s)`);
+      const suffix = result.restarted
+        ? " — instance restarted to download latest versions"
+        : " — start the instance to download latest versions";
+      onApplied(`Refreshed ${okCount}/${result.results.length} mod(s)${suffix}`);
       await refreshChecks();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Download failed");
+      onError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Refresh failed");
     } finally {
       setDownloading(false);
     }
@@ -115,7 +118,8 @@ export function InstanceModsPanel({
         <p className="font-mono text-[11px] text-muted-foreground">Mods</p>
         <h2 className="mt-0.5 text-sm font-medium text-foreground">Workshop mods</h2>
         <p className="mt-2 text-xs leading-5 text-muted-foreground">
-          Add Reforger mod IDs plus optional numeric Steam Workshop IDs for download via SteamCMD.
+          Mod IDs are Reforger workshop GUIDs. Refresh clears cached files so the server downloads the latest version on
+          start.
         </p>
       </div>
 
@@ -142,12 +146,12 @@ export function InstanceModsPanel({
                 />
               </label>
               <label className="block space-y-1 text-xs">
-                <span className="text-muted-foreground">Workshop ID</span>
+                <span className="text-muted-foreground">Workshop ID (legacy)</span>
                 <input
                   className="w-full border border-input bg-background px-2 py-1.5 font-mono text-xs"
                   value={mod.workshopId ?? ""}
                   onChange={(e) => updateMod(index, { workshopId: e.target.value })}
-                  placeholder="123456789"
+                  placeholder="optional"
                 />
               </label>
               <label className="flex items-center gap-2 text-xs">
@@ -178,7 +182,7 @@ export function InstanceModsPanel({
             Add mod
           </Button>
           <Button variant="ghost" disabled={downloading} onClick={() => void downloadMods()}>
-            {downloading ? "Downloading…" : "Download workshop mods"}
+            {downloading ? "Refreshing…" : "Refresh workshop mods"}
           </Button>
           <Button variant="ghost" onClick={() => void refreshChecks()}>
             Check mods on disk

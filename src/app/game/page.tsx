@@ -125,8 +125,8 @@ export default function GamePage() {
         <Card title="Auto updater">
           <div className="space-y-3 text-sm text-zinc-300">
             <p>
-              Stops all instances, runs SteamCMD validate on stable (and experimental if any instance uses it), then
-              restarts what was running.
+              Stops all instances, runs SteamCMD validate on stable (and experimental if any instance uses it),
+              refreshes configured workshop mods, then restarts what was running.
             </p>
             {updateJob?.nextScheduledAt && (
               <p className="text-zinc-400">Next scheduled run (UTC): {new Date(updateJob.nextScheduledAt).toLocaleString()}</p>

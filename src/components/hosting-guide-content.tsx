@@ -171,7 +171,13 @@ export function HostingGuideContent() {
       <Section id="updates" title="Updates">
         <p>
           <strong className="text-foreground">Game files</strong> — Game Install page or scheduled update in Settings.
-          Instances are stopped, SteamCMD validates, then restarted if auto-restart is enabled.
+          Instances are stopped, server files are validated via SteamCMD, workshop mod cache is cleared for configured
+          mods, then instances restart if that option is enabled.
+        </p>
+        <p>
+          <strong className="text-foreground">Workshop mods</strong> — use Mods → Refresh workshop mods on an instance,
+          or rely on the scheduled game update (clears cache before restart). The game downloads latest mod files on
+          start.
         </p>
         <p>
           <strong className="text-foreground">Panel</strong> — Settings → Panel update (git pull + build + restart

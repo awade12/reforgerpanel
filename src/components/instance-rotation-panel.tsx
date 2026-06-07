@@ -228,7 +228,7 @@ export function InstanceRotationPanel({
               checked={draft.downloadMods}
               onChange={(e) => patchRotation({ downloadMods: e.target.checked })}
             />
-            Download workshop mods before start
+            Refresh workshop mod cache before start
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input

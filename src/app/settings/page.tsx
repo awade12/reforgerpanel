@@ -239,7 +239,8 @@ export default function SettingsPage() {
         <Card title="Game auto updater">
           <div className="grid gap-3">
             <p className="text-sm text-zinc-400">
-              Daily SteamCMD validate for stable. Stops instances first, then restarts what was running. Cron is UTC.
+              Daily SteamCMD validate for stable. Stops instances, updates server files, refreshes workshop mod cache,
+              then restarts what was running. Cron is UTC.
             </p>
             {updateJob?.nextScheduledAt && settings.enableScheduledUpdates && (
               <p className="text-sm text-zinc-400">
@@ -275,7 +276,7 @@ export default function SettingsPage() {
                 checked={settings.enableModAwareUpdates}
                 onChange={(e) => patch({ enableModAwareUpdates: e.target.checked })}
               />
-              Restart instances after update
+              Refresh workshop mods and restart instances after update
             </label>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => void save()}>Save schedule</Button>

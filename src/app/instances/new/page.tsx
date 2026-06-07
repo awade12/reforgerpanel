@@ -325,9 +325,8 @@ export default function NewInstancePage() {
                   rows={6}
                 />
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Paste the full scenario path from the mod. Add each dependency mod with{" "}
-                  <span className="font-mono text-[10px]">modId</span> and optional{" "}
-                  <span className="font-mono text-[10px]">workshopId</span> for Steam download.
+                  Paste the full scenario path from the mod. Each dependency needs a{" "}
+                  <span className="font-mono text-[10px]">modId</span> (Reforger workshop GUID).
                 </p>
                 <pre className="overflow-x-auto bg-[#141820] p-3 font-mono text-[10px] leading-5 text-[#c5cad4]">
                   {`[{"modId":"6960D8D8749B438C","name":"Black Mountains","required":true}]`}

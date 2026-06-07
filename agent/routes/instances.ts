@@ -21,7 +21,7 @@ import { queryInstancePlayers } from "../players";
 import { getInstanceDiagnostics } from "../diagnostics";
 import { applyUfwRules } from "../firewall";
 import { checkConfiguredMods, missingRequiredMods } from "../mods";
-import { downloadWorkshopMods } from "../workshop";
+import { refreshWorkshopMods } from "../workshop";
 import { installOrUpdate } from "../steamcmd";
 import { findLatestLogFile, listLogFiles, parseFpsFromLogs, tailLogFile, tailLogLines } from "../logs";
 import {
@@ -241,16 +241,17 @@ export async function handleInstanceRoutes(ctx: RequestContext): Promise<boolean
         if (sub === "/mods/download" && method === "POST") {
           const item = getInstanceDetailed(id);
           if (!item) sendJson(ctx.res, 404, { error: "Not found" });
-          const mods = item.config.game.mods ?? [];
-          const items = mods
-            .filter((mod) => mod.workshopId?.trim())
-            .map((mod) => ({ workshopId: mod.workshopId!, name: mod.name }));
-          if (!items.length) {
-            sendJson(ctx.res, 400, { error: "No mods with Steam Workshop IDs configured" });
+          const mods = (item.config.game.mods ?? []).filter((mod) => mod.modId?.trim());
+          if (!mods.length) {
+            sendJson(ctx.res, 400, { error: "No mods configured" });
             return true;
           }
-          const result = await downloadWorkshopMods(item.branch, item.profilePath, items);
-          sendJson(ctx.res, 200, result);
+          const result = refreshWorkshopMods(item.profilePath, mods);
+          const shouldRestart = item.status === "running" || item.status === "starting";
+          if (shouldRestart) {
+            await restartInstanceById(id);
+          }
+          sendJson(ctx.res, 200, { ...result, restarted: shouldRestart });
           return true;
         }
   

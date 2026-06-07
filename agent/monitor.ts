@@ -11,9 +11,10 @@ import {
 import { preflightSummary } from "../lib/shared/preflight";
 import { installOrUpdate, getInstallJob } from "./steamcmd";
 import { runHostPreflightForGameUpdate } from "./preflight-host";
-import { addAudit, getSettings, listInstances } from "./db";
+import { addAudit, getInstance, getSettings, listInstances } from "./db";
 import { reconcileInstanceStatus } from "./instance-state";
-import { startInstanceById, stopInstanceById } from "./instances";
+import { readInstanceConfig, startInstanceById, stopInstanceById } from "./instances";
+import { refreshWorkshopMods } from "./workshop";
 import { notifyDiscordPlain } from "./discord";
 import { notifyGameUpdate } from "./alerts";
 
@@ -136,6 +137,22 @@ export async function runGameUpdate(options: {
 
     if (restartInstances && allOk) {
       for (const item of runningBefore) {
+        const instance = getInstance(item.id);
+        if (instance) {
+          try {
+            const mods = readInstanceConfig(instance).game.mods ?? [];
+            if (mods.length) {
+              pushLine(`Refreshing workshop mods for ${item.slug}…`);
+              refreshWorkshopMods(instance.profilePath, mods, pushLine);
+            }
+          } catch (err) {
+            pushLine(
+              `Mod refresh skipped for ${item.slug}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      }
+      for (const item of runningBefore) {
         try {
           await startInstanceById(item.id);
           updateJob.restartedInstances.push(item.slug);
@@ -154,7 +171,7 @@ export async function runGameUpdate(options: {
     await notifyDiscordPlain(
       options.trigger === "scheduled" ? "Scheduled update" : "Manual game update",
       allOk
-        ? `Updated ${branches.join(", ")}${restartInstances ? ` · restarted ${updateJob.restartedInstances.length} instance(s)` : ""}`
+        ? `Updated ${branches.join(", ")}${restartInstances ? ` · refreshed mods and restarted ${updateJob.restartedInstances.length} instance(s)` : ""}`
         : "Game update failed — check agent logs",
       webhook,
     );
