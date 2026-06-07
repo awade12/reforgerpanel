@@ -331,6 +331,7 @@ install_caddy
 
 chown -R "${PANEL_USER}:reforger" "${INSTALL_DIR}" 2>/dev/null || chown -R "${PANEL_USER}:${PANEL_USER}" "${INSTALL_DIR}"
 chmod +x "${INSTALL_DIR}/scripts/update-panel.sh" 2>/dev/null || true
+chmod +x "${INSTALL_DIR}/scripts/ensure-panel-web.sh" 2>/dev/null || true
 
 if [[ "${EXISTING}" -eq 0 ]]; then
   log "Installing npm dependencies…"

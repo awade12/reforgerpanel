@@ -102,11 +102,30 @@ Session cookies use `Secure` + `HttpOnly` when `COOKIE_SECURE=true` (set automat
 ## Updating
 
 ```bash
-cd /opt/reforgerpanel   # or: git clone https://github.com/awade12/reforgerpanel.git /opt/reforgerpanel
+cd /opt/reforgerpanel
 git pull
-npm ci && npm run build && npm run db:migrate
-sudo systemctl restart reforgerpanel-agent reforgerpanel
-sudo bash scripts/caddy-setup.sh panel.example.com 3000 /opt/reforgerpanel/deploy/caddy/Caddyfile.template
+NODE_ENV=development npm ci
+NODE_ENV=production npm run build
+npm run db:migrate
+sudo bash scripts/ensure-panel-web.sh
+```
+
+Use separate `systemctl restart` commands (not `restart agent panel` in one line). After any deploy, run `ensure-panel-web.sh` so the web UI is up and Caddy reloads.
+
+Panel update from **Settings** uses `scripts/update-panel.sh` — it stops the web UI during build, then starts it again when finished.
+
+If the site shows **503** after an update:
+
+```bash
+sudo bash /opt/reforgerpanel/scripts/ensure-panel-web.sh
+sudo journalctl -u reforgerpanel -n 30 --no-pager
+```
+
+Refresh sudoers after pulling (one-time if the file changed):
+
+```bash
+sudo cp /opt/reforgerpanel/deploy/reforgerpanel.sudoers /etc/sudoers.d/reforgerpanel
+sudo visudo -cf /etc/sudoers.d/reforgerpanel
 ```
 
 ## Troubleshooting
@@ -128,5 +147,16 @@ Use `--email` so Caddy can register an ACME account. For repeated failed attempt
 
 **Panel shows “agent not running”**  
 `journalctl -u reforgerpanel-agent -f`
+
+**HTTPS 503 after panel update or deploy**  
+The web UI was stopped for build and may not have started again. Run:
+
+```bash
+sudo systemctl start reforgerpanel
+sudo systemctl reload caddy
+curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/login
+```
+
+Or `sudo bash /opt/reforgerpanel/scripts/ensure-panel-web.sh` after updating the panel code.
 
 Install log: `/var/log/reforgerpanel-install.log`

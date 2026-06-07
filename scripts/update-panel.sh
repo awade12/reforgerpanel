@@ -16,6 +16,7 @@ started_at="$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"
 COMMIT_BEFORE=""
 COMMIT_AFTER=""
 NEXT_BACKUP_DIR=""
+PANEL_WAS_STOPPED=0
 
 if [[ -f "${ENV_FILE}" ]]; then
   set -a
@@ -58,16 +59,76 @@ last_log_error() {
   fi
 }
 
+panel_local_url() {
+  echo "http://127.0.0.1:${PORT:-3000}/login"
+}
+
+panel_responding() {
+  curl -fsS --max-time 3 "$(panel_local_url)" >/dev/null 2>&1
+}
+
+wait_for_panel() {
+  local tries="${1:-45}"
+  local sleep_sec="${2:-2}"
+  for ((i = 1; i <= tries; i++)); do
+    if panel_responding; then
+      echo "Panel web UI responding on $(panel_local_url)"
+      return 0
+    fi
+    if ! systemctl is-active --quiet reforgerpanel 2>/dev/null; then
+      echo "reforgerpanel not active — starting (attempt ${i}/${tries})…"
+      sudo -n systemctl start reforgerpanel 2>/dev/null || sudo -n systemctl restart reforgerpanel
+    fi
+    sleep "${sleep_sec}"
+  done
+  echo "ERROR: panel not responding on $(panel_local_url)"
+  return 1
+}
+
+reload_caddy() {
+  if ! systemctl is-enabled caddy &>/dev/null 2>&1; then
+    return 0
+  fi
+  echo "Reloading Caddy…"
+  sudo -n systemctl reload caddy 2>/dev/null || sudo -n systemctl restart caddy
+}
+
 start_panel_if_built() {
   if [[ ! -f "${INSTALL_DIR}/.next/BUILD_ID" ]]; then
     return 1
   fi
-  if systemctl is-active --quiet reforgerpanel 2>/dev/null; then
+  if panel_responding; then
     return 0
   fi
   echo "Starting panel web UI…"
-  sudo -n systemctl start reforgerpanel
+  sudo -n systemctl start reforgerpanel 2>/dev/null || sudo -n systemctl restart reforgerpanel
+  wait_for_panel 30 2 || return 1
+  reload_caddy || true
 }
+
+restart_panel_stack() {
+  echo "Restarting panel web UI…"
+  sudo -n systemctl restart reforgerpanel
+  wait_for_panel 45 2
+  reload_caddy
+  echo "Restarting panel agent…"
+  sudo -n systemctl restart reforgerpanel-agent
+  wait_for_panel 30 2
+  reload_caddy
+  if systemctl is-enabled reforgerpanel-bot &>/dev/null 2>&1; then
+    sudo -n systemctl restart reforgerpanel-bot || true
+  fi
+}
+
+on_exit() {
+  local code=$?
+  if [[ -f "${INSTALL_DIR}/.next/BUILD_ID" ]] && ! panel_responding; then
+    echo "Ensuring panel web UI is up before exit (code ${code})…"
+    start_panel_if_built 2>/dev/null || true
+    reload_caddy 2>/dev/null || true
+  fi
+}
+trap on_exit EXIT
 
 on_err() {
   if [[ -n "${NEXT_BACKUP_DIR:-}" && -d "${NEXT_BACKUP_DIR}" ]]; then
@@ -144,6 +205,7 @@ fi
 
 echo "Stopping panel web UI during build (agent stays up)…"
 sudo -n systemctl stop reforgerpanel 2>/dev/null || true
+PANEL_WAS_STOPPED=1
 
 echo "Running npm ci (includes devDependencies for build)…"
 NODE_ENV=development npm ci
@@ -170,14 +232,7 @@ rm -rf "${NEXT_BACKUP_DIR:-}"
 NEXT_BACKUP_DIR=""
 
 echo "Restarting panel services…"
+restart_panel_stack
 write_state true "" "${COMMIT_AFTER}"
-
-sudo -n systemctl restart reforgerpanel-agent reforgerpanel
-if systemctl is-enabled caddy &>/dev/null; then
-  sudo -n systemctl restart caddy || true
-fi
-if systemctl is-enabled reforgerpanel-bot &>/dev/null; then
-  sudo -n systemctl restart reforgerpanel-bot || true
-fi
 
 echo "=== Panel update finished OK ==="
