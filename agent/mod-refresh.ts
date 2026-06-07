@@ -1,3 +1,4 @@
+import { HttpError } from "../lib/shared/http-error";
 import type { ModEntry } from "../lib/shared/config-schema";
 import {
   modsWithoutPinnedVersions,
@@ -6,8 +7,9 @@ import {
   type ModRefreshResult,
 } from "../lib/shared/mod-cache";
 import type { InstanceRecord } from "../lib/shared/types";
+import { getInstance } from "./db";
+import { reconcileInstanceStatus } from "./instance-state";
 import { readInstanceConfig, startInstanceById, stopInstanceById, writeInstanceConfig } from "./instances";
-import { getReconciledInstance } from "./instance-state";
 
 function instanceModPaths(instance: InstanceRecord): ModCachePaths {
   return { profilePath: instance.profilePath, addonTempDir: instance.addonTempDir };
@@ -37,7 +39,9 @@ export async function refreshInstanceWorkshopMods(
   instanceId: string,
   options?: { onLine?: (line: string) => void },
 ): Promise<{ results: ModRefreshResult[]; stopped: boolean; started: boolean }> {
-  const instance = getReconciledInstance(instanceId);
+  const raw = getInstance(instanceId);
+  if (!raw) throw new HttpError(404, "Instance not found");
+  const instance = reconcileInstanceStatus(raw);
   const wasRunning = instance.status === "running" || instance.status === "starting";
 
   if (wasRunning) {

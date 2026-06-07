@@ -13,6 +13,7 @@ All notable changes to Reforger Host are documented here.
 
 - Fix workshop mod refresh not updating mods: stop the server before clearing cache, purge temp download dirs, and remove pinned mod versions from config
 - Fix panel auto-update leaving the site on HTTP 503: split systemd restarts (combined restart was blocked by sudoers), wait for the web UI, reload Caddy, and ensure the panel starts on script exit
+- Fix **Refresh workshop mods** failing with `getReconciledInstance is not a function`
 
 ### Changed
 
