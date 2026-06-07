@@ -10,6 +10,8 @@ import type { InstanceRecord } from "../lib/shared/types";
 import { getInstance } from "./db";
 import { reconcileInstanceStatus } from "./instance-state";
 import { readInstanceConfig, startInstanceById, stopInstanceById, writeInstanceConfig } from "./instances";
+import { removeInstancePath } from "./instance-paths";
+import { ensureInstancePermissions } from "./systemd";
 
 function instanceModPaths(instance: InstanceRecord): ModCachePaths {
   return { profilePath: instance.profilePath, addonTempDir: instance.addonTempDir };
@@ -30,9 +32,10 @@ function clearPinnedModVersions(instance: InstanceRecord, mods: ModEntry[], onLi
 }
 
 export function refreshInstanceModCache(instance: InstanceRecord, onLine?: (line: string) => void) {
+  ensureInstancePermissions(instance);
   const mods = configuredMods(instance);
   const cleared = clearPinnedModVersions(instance, mods, onLine);
-  return refreshConfiguredMods(instanceModPaths(instance), cleared, onLine);
+  return refreshConfiguredMods(instanceModPaths(instance), cleared, removeInstancePath, onLine);
 }
 
 export async function refreshInstanceWorkshopMods(

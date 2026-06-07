@@ -9,3 +9,4 @@ ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-agent
 ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart reforgerpanel-bot
 ubuntu ALL=(root) NOPASSWD: /bin/systemctl reload caddy
 ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart caddy
+ubuntu ALL=(root) NOPASSWD: /usr/local/bin/reforger-rm-path

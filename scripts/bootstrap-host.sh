@@ -73,6 +73,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cp "${PROJECT_ROOT}/deploy/reforger@.service" /etc/systemd/system/reforger@.service
 chmod 644 /etc/systemd/system/reforger@.service
 install -m 755 "${PROJECT_ROOT}/deploy/reforger-ctl.sh" /usr/local/bin/reforger-ctl
+install -m 755 "${PROJECT_ROOT}/deploy/reforger-rm-path.sh" /usr/local/bin/reforger-rm-path
 cp "${PROJECT_ROOT}/deploy/reforgerpanel.sudoers" /etc/sudoers.d/reforgerpanel
 chmod 440 /etc/sudoers.d/reforgerpanel
 visudo -cf /etc/sudoers.d/reforgerpanel

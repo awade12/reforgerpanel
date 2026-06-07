@@ -7,8 +7,11 @@ export type ModRefreshResult = {
   modId: string;
   name?: string;
   ok: boolean;
+  purged: boolean;
   detail: string;
 };
+
+export type ModCacheRemover = (target: string) => void;
 
 export type ModCachePaths = {
   profilePath: string;
@@ -93,29 +96,30 @@ export function modCacheEntryPath(profilePath: string, modId: string) {
   return targets[0] ?? null;
 }
 
-function clearDirectoryContents(dir: string) {
+function clearDirectoryContents(dir: string, remove: ModCacheRemover) {
   if (!fs.existsSync(dir)) return;
   for (const entry of fs.readdirSync(dir)) {
-    fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
+    remove(path.join(dir, entry));
   }
 }
 
-export function purgeInstanceModTemp(paths: ModCachePaths) {
-  if (paths.addonTempDir) clearDirectoryContents(paths.addonTempDir);
-  clearDirectoryContents(path.join(paths.profilePath, "temp"));
+export function purgeInstanceModTemp(paths: ModCachePaths, remove: ModCacheRemover) {
+  if (paths.addonTempDir) clearDirectoryContents(paths.addonTempDir, remove);
+  clearDirectoryContents(path.join(paths.profilePath, "temp"), remove);
 }
 
-export function purgeModWorkCache(paths: ModCachePaths, modId: string) {
+export function purgeModWorkCache(paths: ModCachePaths, modId: string, remove: ModCacheRemover) {
   const targets = listModCacheTargets(paths, modId);
   if (!targets.length) return false;
   for (const target of targets) {
-    fs.rmSync(target, { recursive: true, force: true });
+    remove(target);
   }
   return true;
 }
 
-export function purgeModCache(profilePath: string, modId: string) {
-  return purgeModWorkCache({ profilePath }, modId);
+export function purgeModCache(profilePath: string, modId: string, remove?: ModCacheRemover) {
+  const rm = remove ?? ((target) => fs.rmSync(target, { recursive: true, force: true }));
+  return purgeModWorkCache({ profilePath }, modId, rm);
 }
 
 export function modsWithoutPinnedVersions(mods: ModEntry[]) {
@@ -125,21 +129,22 @@ export function modsWithoutPinnedVersions(mods: ModEntry[]) {
 export function refreshConfiguredMods(
   paths: ModCachePaths,
   mods: ModEntry[],
+  remove: ModCacheRemover,
   onLine?: (line: string) => void,
 ): { results: ModRefreshResult[] } {
-  purgeInstanceModTemp(paths);
+  purgeInstanceModTemp(paths, remove);
   const results: ModRefreshResult[] = [];
   for (const mod of mods) {
     if (!mod.modId?.trim()) continue;
     const label = mod.name?.trim() || mod.modId;
     try {
-      const purged = purgeModWorkCache(paths, mod.modId);
-      const detail = purged ? "Cache cleared — will re-download on next start" : "Not cached locally";
-      results.push({ modId: mod.modId, name: mod.name, ok: true, detail });
+      const purged = purgeModWorkCache(paths, mod.modId, remove);
+      const detail = purged ? "Cache cleared — will re-download on next start" : "Not found on disk";
+      results.push({ modId: mod.modId, name: mod.name, ok: true, purged, detail });
       onLine?.(`${label}: ${detail}`);
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
-      results.push({ modId: mod.modId, name: mod.name, ok: false, detail });
+      results.push({ modId: mod.modId, name: mod.name, ok: false, purged: false, detail });
       onLine?.(`${label}: failed — ${detail}`);
     }
   }

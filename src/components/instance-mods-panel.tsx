@@ -96,14 +96,23 @@ export function InstanceModsPanel({
     setDownloading(true);
     try {
       const result = await api<{
-        results: { modId: string; ok: boolean; name?: string; detail: string }[];
+        results: { modId: string; ok: boolean; purged: boolean; name?: string; detail: string }[];
         restarted: boolean;
       }>(`instances/${id}/mods/download`, { method: "POST" });
-      const okCount = result.results.filter((item) => item.ok).length;
+      const failed = result.results.filter((item) => !item.ok);
+      const purged = result.results.filter((item) => item.purged).length;
+      if (failed.length) {
+        onError(failed.map((item) => `${item.name ?? item.modId}: ${item.detail}`).join(" · "));
+        return;
+      }
+      if (purged === 0 && result.results.length > 0) {
+        onError("No mod files were removed. Save the mod list, then run on the host: sudo cp /opt/reforgerpanel/deploy/reforgerpanel.sudoers /etc/sudoers.d/reforgerpanel && sudo bash /opt/reforgerpanel/scripts/bootstrap-host.sh");
+        return;
+      }
       const suffix = result.restarted
-        ? " — server stopped, cache cleared, and restarted (check Logs while mods download)"
-        : " — cache cleared; start the server to download latest versions";
-      onApplied(`Refreshed ${okCount}/${result.results.length} mod(s)${suffix}`);
+        ? " — server restarted; watch Logs while mods download"
+        : " — start the server to download latest versions";
+      onApplied(`Cleared ${purged}/${result.results.length} mod(s)${suffix}`);
       await refreshChecks();
     } catch (err) {
       onError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Refresh failed");

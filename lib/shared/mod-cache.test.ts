@@ -56,6 +56,7 @@ test("refreshConfiguredMods clears temp dirs and reports missing mods", () => {
   fs.mkdirSync(path.join(profile, "temp", "chunk"), { recursive: true });
   fs.writeFileSync(path.join(tmp, "partial.bin"), "x");
   fs.writeFileSync(path.join(profile, "temp", "chunk", "partial.bin"), "x");
+  const remove = (target: string) => fs.rmSync(target, { recursive: true, force: true });
 
   const lines: string[] = [];
   const result = refreshConfiguredMods(
@@ -64,12 +65,15 @@ test("refreshConfiguredMods clears temp dirs and reports missing mods", () => {
       { modId: "60EEF465FD67ECF8", name: "Cached mod", required: true },
       { modId: "61E57C95FF956A54", name: "Missing mod", required: true },
     ],
+    remove,
     (line) => lines.push(line),
   );
 
   assert.equal(result.results.length, 2);
+  assert.equal(result.results[0]?.purged, true);
+  assert.equal(result.results[1]?.purged, false);
   assert.match(result.results[0]?.detail ?? "", /Cache cleared/);
-  assert.match(result.results[1]?.detail ?? "", /Not cached/);
+  assert.match(result.results[1]?.detail ?? "", /Not found/);
   assert.equal(fs.existsSync(modRoot), false);
   assert.equal(fs.existsSync(path.join(tmp, "partial.bin")), false);
   assert.equal(fs.existsSync(path.join(profile, "temp", "chunk")), false);
@@ -84,7 +88,8 @@ test("purgeInstanceModTemp clears addon temp and profile temp", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "reforger-mod-tmp-"));
   fs.mkdirSync(path.join(profile, "temp", "a"), { recursive: true });
   fs.writeFileSync(path.join(tmp, "x"), "1");
-  purgeInstanceModTemp({ profilePath: profile, addonTempDir: tmp });
+  const remove = (target: string) => fs.rmSync(target, { recursive: true, force: true });
+  purgeInstanceModTemp({ profilePath: profile, addonTempDir: tmp }, remove);
   assert.equal(fs.existsSync(path.join(tmp, "x")), false);
   assert.equal(fs.existsSync(path.join(profile, "temp", "a")), false);
   fs.rmSync(profile, { recursive: true, force: true });
